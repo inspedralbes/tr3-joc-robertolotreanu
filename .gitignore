@@ -1,6 +1,43 @@
+# --- NODE.JS / SERVER ---
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 .env
-.DS_Store
+.env.test
+.env.production
 dist/
 build/
-*.log
+
+# --- UNITY / CLIENT ---
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[MemoryCaptures]/
+Assets/AssetStoreTools*
+
+# No pugis els fitxers de projecte de Visual Studio a la carpeta de Unity
+.vs/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+
+# Unity personal settings
+UserSettings/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
