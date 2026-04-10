@@ -4,10 +4,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .env
-.env.test
-.env.production
+.env.*
+! .env.example
 dist/
 build/
+server/node_modules/
+server/.env
 
 # --- UNITY / CLIENT ---
 [Ll]ibrary/
@@ -16,10 +18,10 @@ build/
 [Bb]uild/
 [Bb]uilds/
 [Ll]ogs/
-[MemoryCaptures]/
-Assets/AssetStoreTools*
+[Mm]emoryCaptures/
+/[Aa]ssets/AssetStoreTools*
 
-# No pugis els fitxers de projecte de Visual Studio a la carpeta de Unity
+# Ignore generated project files
 .vs/
 *.csproj
 *.sln
@@ -32,6 +34,8 @@ Assets/AssetStoreTools*
 *.pdb
 *.opendb
 *.VC.db
+/client/*/*.csproj
+/client/*/*.sln
 
 # Unity personal settings
 UserSettings/
@@ -41,3 +45,8 @@ UserSettings/
 .DS_Store?
 ._*
 Thumbs.db
+
+# --- MISC ---
+.vscode/
+.idea/
+*.log
