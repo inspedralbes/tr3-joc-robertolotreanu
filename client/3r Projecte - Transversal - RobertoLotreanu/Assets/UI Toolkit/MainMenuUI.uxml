@@ -1,0 +1,12 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="LoginPanel" style="flex-grow: 1;">
+        <ui:TextField label="Text Field" placeholder-text="filler text" name="UsernameInput" />
+        <ui:Label text="Nom del jugador" style="white-space: pre-wrap;" />
+        <ui:Button text="Entrar" name="LoginButton" />
+    </ui:VisualElement>
+    <ui:VisualElement name="LobbyPanel" style="flex-grow: 1;">
+        <ui:Label text="Benvingut!" name="WelcomeLabel" />
+        <ui:TextField label="Nom de la Sala" placeholder-text="filler text" name="RoomNameInput" />
+        <ui:DropdownField label="Dropdown" name="GameTypeDropdown" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -8,11 +8,13 @@ public class PlatformSpawner : MonoBehaviour
     public Transform player;          
     
     [Header("Configuració de Distància (Y)")]
-    public float stepY = 2.5f;       // Distancia vertical FIJA (ajusta esto si no llegas)
+    public float stepY = 1.5f;       // Altura de los saltos mucho más asequible
     
     [Header("Configuració Horizontal (X)")]
-    public float maxJumpX = 4.0f;    // Distancia horizontal MÁXIMA que puede cubrir tu Samurai
-    public float width = 14f;         // Ancho total de la cámara
+    [Tooltip("El hueco MÍNIMO garantizado entre los bordes de las plataformas")]
+    public float huecoMinimo = 0.5f; // Espacio por donde pasará el Samurai
+    public float maxJumpX = 3.5f;    // Distancia máxima humana para saltar
+    public float width = 14f;         
     
     [Header("Configuració de Mida")]
     public float minWidthScale = 0.8f; 
@@ -21,72 +23,74 @@ public class PlatformSpawner : MonoBehaviour
     public float maxThickness = 1.0f;  
     
     private float lastSpawnY = -2f;
-    private float lastSpawnX = 0f; // Guardamos dónde estaba la última plataforma en X
+    private float lastSpawnX = 0f; 
+    private float lastPlatformWidth = 2.0f; // Guardamos el ancho de la última
     private List<GameObject> activePlatforms = new List<GameObject>();
 
     void Start()
     {
-        // Generamos las primeras plataformas de golpe
-        for (int i = 0; i < 6; i++)
-        {
-            SpawnPlatform();
-        }
+        for (int i = 0; i < 6; i++) SpawnPlatform();
     }
 
     void Update()
     {
-        // 1. GENERACIÓN: Si el jugador sube, creamos plataformas por encima
         if (player != null && player.position.y + 12f > lastSpawnY)
         {
             SpawnPlatform();
         }
-
-        // 2. OPTIMIZACIÓN: Destruimos las plataformas que van quedando muy abajo
-        if (player != null)
-        {
-            CleanupPlatforms();
-        }
+        if (player != null) CleanupPlatforms();
     }
     
     void SpawnPlatform()
     {
-        // 1. DISTANCIA VERTICAL (Ahora es siempre exactamente la misma)
         lastSpawnY += stepY;
-
-        // 2. POSICIÓ HORIZONTAL (Limitada para que sea alcanzable)
         float halfWidth = width / 2f;
         
-        // Calculamos dónde puede aparecer la siguiente plataforma basándonos en la anterior
-        float minX = Mathf.Max(-halfWidth, lastSpawnX - maxJumpX);
-        float maxX = Mathf.Min(halfWidth, lastSpawnX + maxJumpX);
-        
-        float randomX = Random.Range(minX, maxX);
-        lastSpawnX = randomX; // Guardamos esta posición para usarla en el siguiente salto
-        
-        Vector3 pos = new Vector3(randomX, lastSpawnY, 0);
-        GameObject newPlatform = Instantiate(platformPrefab, pos, Quaternion.identity);
-
-        // 3. MIDA
+        // 1. Decidimos el tamaño de la NUEVA plataforma primero
         float randomW = Random.Range(minWidthScale, maxWidthScale); 
         float randomThick = Random.Range(minThickness, maxThickness);
+
+        // 2. LA MAGIA: Calculamos la distancia mínima para que los BORDES no se toquen
+        // (Mitad de la plataforma anterior + Mitad de la nueva + El hueco para que salte el jugador)
+        float distanciaMinimaSegura = (lastPlatformWidth / 2f) + (randomW / 2f) + huecoMinimo;
+        
+        // Nos aseguramos de que el salto máximo siempre sea mayor que la distancia mínima
+        float saltoMaximoReal = Mathf.Max(maxJumpX, distanciaMinimaSegura + 0.5f);
+
+        // 3. Calculamos la posición con esa distancia segura garantizada
+        float offsetX = Random.Range(distanciaMinimaSegura, saltoMaximoReal);
+        
+        if (Random.value > 0.5f) { offsetX = -offsetX; }
+        float randomX = lastSpawnX + offsetX;
+
+        // Si nos chocamos con la pared, rebotamos hacia el lado contrario
+        if (randomX < -halfWidth || randomX > halfWidth) 
+        {
+            randomX = lastSpawnX - offsetX; 
+        }
+
+        // Límite absoluto de la pantalla
+        randomX = Mathf.Clamp(randomX, -halfWidth, halfWidth);
+        
+        // 4. Guardamos los datos para la siguiente plataforma
+        lastSpawnX = randomX; 
+        lastPlatformWidth = randomW; 
+        
+        // 5. Instanciamos
+        Vector3 pos = new Vector3(randomX, lastSpawnY, 0);
+        GameObject newPlatform = Instantiate(platformPrefab, pos, Quaternion.identity);
         newPlatform.transform.localScale = new Vector3(randomW, randomThick, 1f); 
 
-        // La guardamos en nuestra lista para optimizar después
         activePlatforms.Add(newPlatform);
     }
 
-    // NUEVA FUNCIÓN: Destruye las plataformas para optimizar
     void CleanupPlatforms()
     {
         if (activePlatforms.Count == 0) return;
 
-        // Revisamos siempre la plataforma más vieja (la posición 0 de la lista)
         GameObject lowestPlatform = activePlatforms[0];
-        
-        // Si la plataforma está 10 unidades por debajo del jugador...
         if (lowestPlatform != null && (player.position.y - lowestPlatform.transform.position.y) > 10f)
         {
-            // La quitamos de la lista y la destruimos para liberar memoria
             activePlatforms.RemoveAt(0);
             Destroy(lowestPlatform);
         }
