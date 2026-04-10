@@ -1,3 +1,5 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:Label text="Time: 0.00s" name="label-score" style="font-size: 40px; color: rgb(255, 255, 255); -unity-font-style: bold;" />
+    <ui:Button text="START GAME&#10;" name="btn-start" style="font-size: 40px; -unity-font-style: normal; white-space: nowrap; -unity-text-outline-color: rgb(0, 0, 0); color: rgb(0, 0, 0); background-color: rgb(12, 255, 0);" />
+    <ui:Label text="3" name="label-countdown" style="font-size: 150px; -unity-text-align: middle-center; -unity-font-style: bold; display: none;" />
 </ui:UXML>

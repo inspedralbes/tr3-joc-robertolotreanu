@@ -2,22 +2,31 @@ using UnityEngine;
 
 public class LavaRise : MonoBehaviour
 {
-    public float speed = 0.5f; // Com de ràpid puja la lava
+    public float speed = 0.8f; // Velocitat a la que puja
 
     void Update()
     {
-        // La lava puja constantment cap amunt
+        // La lava puja només si el script està activat
         transform.Translate(Vector3.up * speed * Time.deltaTime);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Si el Player toca la lava...
+        // Si toca al Player...
         if (other.gameObject.name == "Player")
         {
+            // Busquem el HUD per parar el temps
+            HUDController hud = FindObjectOfType<HUDController>();
+            if (hud != null) hud.StopTimer();
+
             Debug.Log("HAS MORT!");
-            // Aquí podríem reiniciar el nivell
-            UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+            // Reiniciem el joc als 2 segons
+            Invoke("RestartGame", 2f);
         }
+    }
+
+    void RestartGame()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
     }
 }
