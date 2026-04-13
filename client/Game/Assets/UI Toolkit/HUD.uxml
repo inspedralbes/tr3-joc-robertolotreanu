@@ -1,3 +1,13 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:Label text="Time: 0.00s" name="label-score" style="font-size: 40px; color: rgb(255, 255, 255); -unity-font-style: bold;" />
+    <ui:VisualElement name="GameOverPanel" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0.69); position: absolute; top: 0; left: 0; bottom: 0; right: 0; display: none;">
+        <ui:Label text="GAME OVER" style="font-size: 40px; color: rgb(255, 255, 255); -unity-font-style: bold-and-italic; -unity-font-definition: url(&quot;project://database/Library/unity%20default%20resources?fileID=10102&amp;guid=0000000000000000e000000000000000&amp;type=0#LegacyRuntime&quot;);" />
+        <ui:Label text="Label" name="FinalScoreLabel" />
+        <ui:Button text="Volver a jugar" name="RestartButton" />
+        <ui:Button text="Menú Principal" name="MenuButton" />
+    </ui:VisualElement>
+    <ui:VisualElement name="PlayerStats" style="flex-grow: 0; flex-direction: row; background-color: rgba(55, 55, 55, 0.4); flex-shrink: 0;">
+        <ui:VisualElement name="Avatar" style="flex-grow: 1; width: 100px; height: 100px; background-image: url(&quot;project://database/Assets/Sprites/IDLE.png?fileID=815424164945274260&amp;guid=8131e58a55001b3d1b839aadf79eb7c1&amp;type=3#IDLE_0&quot;); -unity-background-scale-mode: scale-to-fit;" />
+        <ui:Label text="Puntos: 0" name="label-puntos" style="width: 300px; height: 120px; flex-direction: row;" />
+    </ui:VisualElement>
 </ui:UXML>
