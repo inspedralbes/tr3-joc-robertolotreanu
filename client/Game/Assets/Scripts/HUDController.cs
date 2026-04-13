@@ -1,86 +1,63 @@
 using UnityEngine;
-using UnityEngine.UIElements; 
-using System.Collections; // Necesario para la cuenta atrás (Coroutines)
+using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
 
 public class HUDController : MonoBehaviour
 {
-    private Label scoreLabel;
-    private Label countdownLabel;
-    private Button startButton;
+    private Label labelScore;
+    private Label labelPuntos;
+    private VisualElement gameOverPanel;
+    private Label finalScoreLabel;
+    private Button restartButton;
+    private Button menuButton;
 
-    private float timeSurvived = 0f;
-    private bool isGameRunning = false;
-
-    public LavaRise lavaScript;
-    public PlayerMovement playerScript;
+    private float tiempoTranscurrido;
+    private int puntosTotales;
 
     void OnEnable()
     {
-        // 1. Conectar con los elementos del UXML por su NOMBRE
         var root = GetComponent<UIDocument>().rootVisualElement;
+
+        labelScore = root.Q<Label>("label-score");
+        labelPuntos = root.Q<Label>("label-puntos");
+        gameOverPanel = root.Q<VisualElement>("GameOverPanel");
+        finalScoreLabel = root.Q<Label>("FinalScoreLabel");
+        restartButton = root.Q<Button>("RestartButton");
+        menuButton = root.Q<Button>("MenuButton");
+
+        gameOverPanel.style.display = DisplayStyle.None;
+        Time.timeScale = 1f;
+
+        if (restartButton != null)
+            restartButton.clicked += () => SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         
-        scoreLabel = root.Q<Label>("label-score");
-        countdownLabel = root.Q<Label>("label-countdown");
-        startButton = root.Q<Button>("btn-start");
-
-        // 2. Configurar el estado inicial
-        scoreLabel.text = "Time: 0.00s";
-        countdownLabel.style.display = DisplayStyle.None; // Oculto
-        startButton.style.display = DisplayStyle.Flex; // Visible
-
-        // 3. Asignar la función al pulsar el botón
-        startButton.clicked += OnStartButtonPressed;
-
-        // 4. Desactivar el movimiento del jugador y la lava al principio
-        if(lavaScript) lavaScript.enabled = false;
-        if(playerScript) playerScript.enabled = false; 
+        if (menuButton != null)
+            menuButton.clicked += () => SceneManager.LoadScene("Lobby");
     }
 
     void Update()
     {
-
-        if (isGameRunning && scoreLabel != null)
-        {
-            timeSurvived += Time.deltaTime;
-            scoreLabel.text = "Time: " + timeSurvived.ToString("F2") + "s";
-        }
+        tiempoTranscurrido += Time.deltaTime;
+        if (labelScore != null)
+            labelScore.text = $"Tiempo: {tiempoTranscurrido:F2}s";
     }
 
-    // Función que se ejecuta al pulsar START
-    void OnStartButtonPressed()
+    public void SumarPuntos(int cantidad)
     {
-        startButton.style.display = DisplayStyle.None;
+        puntosTotales += cantidad;
+        if (labelPuntos != null)
+            labelPuntos.text = $"Puntos: {puntosTotales}";
+    }
+
+    public void MostrarGameOver()
+    {
+        Time.timeScale = 0f; 
+        gameOverPanel.style.display = DisplayStyle.Flex;
+        if (finalScoreLabel != null)
+            finalScoreLabel.text = $"Puntuación Final: {puntosTotales}";
         
-        StartCoroutine(StartCountdown());
-    }
-
-    // Lógica de la cuenta atrás (espera segundos)
-    IEnumerator StartCountdown()
-    {
-        countdownLabel.style.display = DisplayStyle.Flex; 
-
-        countdownLabel.text = "3";
-        yield return new WaitForSeconds(1f); 
-
-        countdownLabel.text = "2";
-        yield return new WaitForSeconds(1f);
-
-        countdownLabel.text = "1";
-        yield return new WaitForSeconds(1f);
-
-        countdownLabel.text = "¡YA!";
-        yield return new WaitForSeconds(0.5f);
-
-        // --- EMPIEZA EL JUEGO ---
-        countdownLabel.style.display = DisplayStyle.None; 
-        isGameRunning = true;
-
-        if(lavaScript) lavaScript.enabled = true;
-        if(playerScript) playerScript.enabled = true;
-    }
-
-    public void StopTimer()
-    {
-        isGameRunning = false;
+        // CORRECCIÓN AQUÍ: Usamos UnityEngine.Cursor para evitar la ambigüedad
+        UnityEngine.Cursor.lockState = CursorLockMode.None;
+        UnityEngine.Cursor.visible = true;
     }
 }

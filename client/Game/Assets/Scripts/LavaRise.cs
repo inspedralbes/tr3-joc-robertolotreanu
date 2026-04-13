@@ -2,31 +2,31 @@ using UnityEngine;
 
 public class LavaRise : MonoBehaviour
 {
-    public float speed = 0.8f; // Velocitat a la que puja
+    public float speed = 0.8f; // Velocidad a la que sube la lava
 
     void Update()
     {
-        // La lava puja només si el script està activat
+        // La lava sube constantemente
         transform.Translate(Vector3.up * speed * Time.deltaTime);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Si toca al Player...
+        // Si toca al Player (asegúrate de que el objeto se llame exactamente "Player")
         if (other.gameObject.name == "Player")
         {
-            // Busquem el HUD per parar el temps
+            // Buscamos el HUD para mostrar la pantalla de fin de partida
             HUDController hud = FindObjectOfType<HUDController>();
-            if (hud != null) hud.StopTimer();
+            
+            if (hud != null) 
+            {
+                hud.MostrarGameOver();
+            }
 
-            Debug.Log("HAS MORT!");
-            // Reiniciem el joc als 2 segons
-            Invoke("RestartGame", 2f);
+            Debug.Log("¡EL SAMURÁI SE HA QUEMADO!");
+            
+            // Ya no reiniciamos automáticamente aquí, 
+            // ahora el jugador usará los botones del panel de Game Over.
         }
-    }
-
-    void RestartGame()
-    {
-        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
     }
 }
