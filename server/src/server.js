@@ -1,41 +1,84 @@
-// src/server.js
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const dotenv = require('dotenv');
+const cors = require('cors'); // Afegeix això (npm install cors)
 
-// Carregar variables d'entorn (.env)
 dotenv.config();
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const PORT = process.env.PORT || 3000;
+app.use(cors()); // Molt important per a Unity!
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// --- MIDDLEWARES ---
-app.use(express.json()); // Permet que Unity ens enviï dades en format JSON
+let activeRooms = []; // Memòria temporal de sales (3.2.3)
 
-// --- RUTES (Endpoints) ---
-const userController = require('./controllers/UserController');
+// --- API (3.2.1) ---
 
-app.get('/health', (req, res) => {
-    res.send({ status: "Servidor actiu", date: new Date() });
+// Registre de jugador
+app.post('/api/register', (req, res) => {
+    console.log("Nou registre:", req.body.alias);
+    res.status(200).send({ message: "Registrat correctament" });
 });
 
-// Ruta de registre per a UnityWebRequest
-app.post('/api/register', userController.register);
+// Crear sala
+app.post('/api/rooms/create', (req, res) => {
+    const { roomName, hostName, maxPlayers } = req.body;
+    const newRoom = {
+        id: Date.now().toString(),
+        name: roomName,
+        host: hostName,
+        players: 1,
+        playersList: [hostName],
+        max: parseInt(maxPlayers) || 4
+    };
+    activeRooms.push(newRoom);
+    console.log("Sala creada:", newRoom);
+    res.status(201).send(newRoom);
+});
 
-// --- WEBSOCKETS (Comunicació en temps real) ---
+// Unir-se a sala
+app.post('/api/rooms/join', (req, res) => {
+    const { roomName, playerName } = req.body;
+    const room = activeRooms.find(r => r.name === roomName);
+    if (room && room.players < room.max) {
+        room.players++;
+        room.playersList.push(playerName);
+        console.log(`${playerName} s'ha unit a ${roomName}`);
+        res.status(200).send(room);
+    } else {
+        res.status(400).send({ message: "Sala plena o no trobada" });
+    }
+});
+
+//Borrar sales 
+app.post('/api/rooms/clear', (req, res) => {
+    rooms = []; // Vacía la lista de salas
+    console.log("Salas limpiadas por el cliente");
+    res.send("OK");
+});
+
+// Llistar sales (Per al botó Recarregar de Unity)
+app.get('/api/rooms', (req, res) => {
+    res.json(activeRooms);
+});
+
+// --- WEBSOCKETS (3.2.2) ---
 io.on('connection', (socket) => {
-    console.log('Un jugador s\'ha connectat:', socket.id);
+    console.log('Jugador connectat al socket:', socket.id);
+
+    socket.on('playerAction', (data) => {
+        socket.broadcast.emit('updateGameState', data);
+    });
 
     socket.on('disconnect', () => {
         console.log('Jugador desconnectat');
     });
 });
 
-// --- INICIAR SERVIDOR ---
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`🚀 Servidor corrent a: http://localhost:${PORT}`);
+    console.log(`🚀 Servidor a http://localhost:${PORT}`);
 });
