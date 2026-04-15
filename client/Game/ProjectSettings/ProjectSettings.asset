@@ -580,7 +580,8 @@ PlayerSettings:
   webGLWebAssemblyBigInt: 0
   webGLCloseOnQuit: 0
   webWasm2023: 0
-  scriptingDefineSymbols: {}
+  scriptingDefineSymbols:
+    Standalone: UNITY_NETCODE
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

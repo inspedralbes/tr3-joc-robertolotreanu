@@ -16,7 +16,7 @@ public class LavaRise : MonoBehaviour
         if (other.gameObject.name == "Player")
         {
             // Buscamos el HUD para mostrar la pantalla de fin de partida
-            HUDController hud = FindObjectOfType<HUDController>();
+            HUDController hud = Object.FindFirstObjectByType<HUDController>();
             
             if (hud != null) 
             {

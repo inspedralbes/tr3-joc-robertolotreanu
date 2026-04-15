@@ -1,225 +1,111 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEngine.Networking;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine.SceneManagement;
-
-#if UNITY_NETCODE
 using Unity.Netcode;
-using Unity.Netcode.Transports.UTP;
-#endif
 
-public class MenuManager : MonoBehaviour
-{
-    private VisualElement _root;
+public class MenuManager : MonoBehaviour {
     private VisualElement _loginPanel, _lobbyPanel, _waitingRoomPanel, _createRoomPopup;
-    private TextField _usernameInput, _newRoomNameInput;
-    private ListView _roomList, _playerList;
-    private Label _roomNameLabel;
-    private Button _joinBtn, _startGameBtn;
-    private List<string> _displayPlayers = new List<string>();
-    
-    private List<string> _displayRooms = new List<string>();
-    private List<RoomData> _currentRoomsData = new List<RoomData>();
-    private string _localPlayerName;
-    private bool _isHost = false;
-    private string serverURL = "http://localhost:3000/api";
+    private TextField _usernameInput, _newRoomName;
+    private LoginNetworkHandler _loginHandler;
 
-    void OnEnable()
-    {
-        var uiDocument = GetComponent<UIDocument>();
-        if (uiDocument == null) return;
-        _root = uiDocument.rootVisualElement;
+    void OnEnable() {
+        var root = GetComponent<UIDocument>().rootVisualElement;
+        _loginHandler = GetComponent<LoginNetworkHandler>();
 
-        // Referències amb seguretat
-        _loginPanel = _root.Q<VisualElement>("LoginPanel");
-        _lobbyPanel = _root.Q<VisualElement>("LobbyPanel");
-        _waitingRoomPanel = _root.Q<VisualElement>("WaitingRoomPanel");
-        _createRoomPopup = _root.Q<VisualElement>("CreateRoomPopup");
-        _usernameInput = _root.Q<TextField>("UsernameInput");
-        _newRoomNameInput = _root.Q<TextField>("NewRoomName");
-        _roomNameLabel = _root.Q<Label>("RoomNameLabel");
-        _roomList = _root.Q<ListView>("RoomList");
-        _playerList = _root.Q<ListView>("PlayerList");
-        _joinBtn = _root.Q<Button>("JoinButton");
-        _startGameBtn = _root.Q<Button>("StartGameButton");
+        // 1. Encontrar los paneles principales y el popup
+        _loginPanel = root.Q<VisualElement>("LoginPanel");
+        _lobbyPanel = root.Q<VisualElement>("LobbyPanel");
+        _waitingRoomPanel = root.Q<VisualElement>("WaitingRoomPanel");
+        _createRoomPopup = root.Q<VisualElement>("CreateRoomPopup");
 
-        // Botons
-        SetupBtn("LoginButton", () => StartCoroutine(PostRegister()));
-        SetupBtn("RefreshButton", () => StartCoroutine(GetRooms()));
-        SetupBtn("ShowCreatePanelButton", () => _createRoomPopup.style.display = DisplayStyle.Flex);
-        SetupBtn("CancelCreateRoomButton", () => _createRoomPopup.style.display = DisplayStyle.None);
-        SetupBtn("ConfirmCreateRoomButton", () => StartCoroutine(PostCreateRoom()));
-        SetupBtn("LeaveRoomButton", OnLeaveRoomClicked);
+        // 2. Encontrar las cajas de texto
+        _usernameInput = root.Q<TextField>("UsernameInput");
+        _newRoomName = root.Q<TextField>("NewRoomName");
 
-        if (_joinBtn != null) _joinBtn.clicked += OnJoinClicked;
-        SetupBtn("StartGameButton", OnStartGameClicked);
+        // --- FUNCIONES DE LOS BOTONES ---
 
-        if (_joinBtn != null) _joinBtn.clicked += OnJoinClicked;
+        // Botón LOGIN
+        root.Q<Button>("LoginButton").clicked += () => StartCoroutine(_loginHandler.LoginUsuario(_usernameInput.value, ok => {
+            if (ok) ShowPanel(_lobbyPanel);
+        }));
 
-        // Llista
-        if (_roomList != null) {
-            _roomList.makeItem = () => new Label() { style = { color = Color.white, height = 30 } };
-            _roomList.bindItem = (e, i) => (e as Label).text = _displayRooms[i];
-            _roomList.itemsSource = _displayRooms;
-            _roomList.onSelectionChange += (objs) => _joinBtn.SetEnabled(true);
-        }
+        // Botón RECARGAR
+        root.Q<Button>("RefreshButton").clicked += () => {
+            Debug.Log("¡Recargando lista de salas!");
+        };
 
-        if (_playerList != null) {
-            _playerList.makeItem = () => new Label() { style = { color = Color.white, height = 25 } };
-            _playerList.bindItem = (e, i) => (e as Label).text = _displayPlayers[i];
-            _playerList.itemsSource = _displayPlayers;
-        }
+        // Botón UNIRSE
+        root.Q<Button>("JoinButton").clicked += () => {
+            Debug.Log("¡Intentando unirse a la sala seleccionada!");
+        };
 
-        ShowPanel(_loginPanel);
-    }
+        // Botón CREAR SALA (Abre el popup)
+        root.Q<Button>("ShowCreatePanelButton").clicked += () => {
+            if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.Flex;
+        };
 
-    private void SetupBtn(string name, System.Action action) {
-        var b = _root.Q<Button>(name);
-        if (b != null) b.clicked += action;
-    }
+        // Botón CANCELAR dentro del popup (Cierra el popup)
+        root.Q<Button>("CancelCreateRoomButton").clicked += () => {
+            if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.None;
+        };
 
-    IEnumerator PostRegister() {
-        if (string.IsNullOrEmpty(_usernameInput.value)) yield break;
-        _localPlayerName = _usernameInput.value;
-        WWWForm form = new WWWForm();
-        form.AddField("alias", _localPlayerName);
-        using (UnityWebRequest www = UnityWebRequest.Post(serverURL + "/register", form)) {
-            yield return www.SendWebRequest();
-            ShowPanel(_lobbyPanel);
-            StartCoroutine(GetRooms());
-        }
-    }
-
-    IEnumerator GetRooms() {
-        using (UnityWebRequest www = UnityWebRequest.Get(serverURL + "/rooms")) {
-            yield return www.SendWebRequest();
-            if (www.result == UnityWebRequest.Result.Success) {
-                string json = "{\"items\":" + www.downloadHandler.text + "}";
-                RoomListWrapper wrapper = JsonUtility.FromJson<RoomListWrapper>(json);
-                _currentRoomsData.Clear(); _displayRooms.Clear();
-                foreach (var r in wrapper.items) {
-                    _currentRoomsData.Add(r);
-                    _displayRooms.Add($"{r.name.ToUpper()} ({r.players}/{r.max})");
-                }
-                _roomList.Rebuild();
-            }
-        }
-    }
-
-    IEnumerator PostCreateRoom() {
-        _isHost = true;
-        WWWForm form = new WWWForm();
-        form.AddField("roomName", _newRoomNameInput.value);
-        form.AddField("hostName", _localPlayerName);
-        using (UnityWebRequest www = UnityWebRequest.Post(serverURL + "/rooms/create", form)) {
-            yield return www.SendWebRequest();
-            _createRoomPopup.style.display = DisplayStyle.None;
-            _roomNameLabel.text = _newRoomNameInput.value.ToUpper();
-            _displayPlayers.Clear();
-            _displayPlayers.Add(_localPlayerName);
-            _playerList.Rebuild();
+        // Botón CONFIRMAR dentro del popup (Inicia el servidor/host)
+        root.Q<Button>("ConfirmCreateRoomButton").clicked += () => {
+            Debug.Log("Intentando crear sala con nombre: " + _newRoomName.value);
             
-            _startGameBtn.style.display = DisplayStyle.Flex;
-            #if UNITY_NETCODE
-            ConfigureTransport();
-            bool success = NetworkManager.Singleton.StartHost();
-            Debug.Log($"[Netcode] StartHost: {success}");
-            #endif
-            StartCoroutine(PollRoomPlayers());
-            ShowPanel(_waitingRoomPanel);
-        }
-    }
-
-    private void ConfigureTransport() {
-        #if UNITY_NETCODE
-        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        if (transport != null) {
-            transport.ConnectionData.Address = "127.0.0.1";
-            transport.ConnectionData.Port = 7777;
-        }
-        #endif
-    }
-
-    private void OnJoinClicked() {
-        if (_roomList.selectedIndex < 0) return;
-        _isHost = false;
-        _startGameBtn.style.display = DisplayStyle.None;
-        
-        string selectedRoom = _displayRooms[_roomList.selectedIndex];
-        _roomNameLabel.text = selectedRoom.Split('(')[0].Trim();
-
-        #if UNITY_NETCODE
-        ConfigureTransport();
-        bool success = NetworkManager.Singleton.StartClient();
-        Debug.Log($"[Netcode] StartClient: {success}");
-        #endif
-        StartCoroutine(PostJoinRoom());
-        ShowPanel(_waitingRoomPanel);
-    }
-
-    IEnumerator PostJoinRoom() {
-        WWWForm form = new WWWForm();
-        form.AddField("roomName", _roomNameLabel.text);
-        form.AddField("playerName", _localPlayerName);
-        using (UnityWebRequest www = UnityWebRequest.Post(serverURL + "/rooms/join", form)) {
-            yield return www.SendWebRequest();
-            if (www.result == UnityWebRequest.Result.Success) {
-                StartCoroutine(PollRoomPlayers());
-            }
-        }
-    }
-
-    IEnumerator PollRoomPlayers() {
-        while (_waitingRoomPanel.style.display == DisplayStyle.Flex) {
-            using (UnityWebRequest www = UnityWebRequest.Get(serverURL + "/rooms")) {
-                yield return www.SendWebRequest();
-                if (www.result == UnityWebRequest.Result.Success) {
-                    string json = "{\"items\":" + www.downloadHandler.text + "}";
-                    RoomListWrapper wrapper = JsonUtility.FromJson<RoomListWrapper>(json);
-                    foreach (var r in wrapper.items) {
-                        if (r.name.ToUpper() == _roomNameLabel.text.ToUpper()) {
-                            _displayPlayers.Clear();
-                            foreach (var p in r.playersList) _displayPlayers.Add(p);
-                            _playerList.Rebuild();
-                            break;
-                        }
-                    }
-                }
-            }
-            yield return new WaitForSeconds(2f);
-        }
-    }
-
-    private void OnStartGameClicked() {
-        Debug.Log($"[Menu] StartGame Clicked. IsHost: {_isHost}");
-        #if UNITY_NETCODE
-        if (_isHost) {
-            if (NetworkManager.Singleton.SceneManager != null) {
-                Debug.Log("[Netcode] Host loading scene: Game");
-                NetworkManager.Singleton.SceneManager.LoadScene("Game", LoadSceneMode.Single);
+            // Comprobamos que el NetworkManager exista en la escena
+            if (NetworkManager.Singleton != null) {
+                // 1. Iniciamos la conexión como Host (Servidor + Cliente a la vez)
+                NetworkManager.Singleton.StartHost();
+                
+                // 2. Escondemos el popup
+                if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.None;
+                
+                // 3. Cambiamos a la pantalla de la Sala de Espera (Waiting Room)
+                ShowPanel(_waitingRoomPanel);
             } else {
-                Debug.LogError("[Netcode] SceneManager is null! Is NetworkManager correctly set up?");
+                Debug.LogError("¡OJO! No se ha encontrado el NetworkManager en la escena.");
             }
-        }
-        #endif
+        };
+
+        // --- BOTONES DE LA SALA DE ESPERA ---
+
+        // Botón INICIAR COMBAT
+        root.Q<Button>("StartGameButton").clicked += () => {
+            Debug.Log("¡Cargando la escena de juego para todos!");
+            
+            // Comprobamos que somos el jefe de la sala (El Server/Host)
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer) {
+                // En multijugador no se usa SceneManager normal, se usa el de NetworkManager
+                // IMPORTANTE: Asegúrate de que tu escena de juego se llama exactamente "Game"
+                NetworkManager.Singleton.SceneManager.LoadScene("Game", UnityEngine.SceneManagement.LoadSceneMode.Single);
+            }
+        };
+
+        // Botón SORTIR (Salir de la sala)
+        root.Q<Button>("LeaveRoomButton").clicked += () => {
+            Debug.Log("Saliendo de la sala y apagando servidor...");
+            
+            if (NetworkManager.Singleton != null) {
+                // Apagamos nuestra conexión
+                NetworkManager.Singleton.Shutdown();
+            }
+            // Volvemos a la lista de salas
+            ShowPanel(_lobbyPanel);
+        };
+
+        // --- ESTADO INICIAL ---
+        ShowPanel(_loginPanel);
+        // Nos aseguramos de que el popup empiece oculto al abrir el juego
+        if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.None; 
     }
 
-    private void OnLeaveRoomClicked() {
-        #if UNITY_NETCODE
-        NetworkManager.Singleton.Shutdown();
-        #endif
-        ShowPanel(_lobbyPanel);
-    }
-
-    private void ShowPanel(VisualElement p) {
+    void ShowPanel(VisualElement p) {
+        // Oculta todos los paneles
         if (_loginPanel != null) _loginPanel.style.display = DisplayStyle.None;
         if (_lobbyPanel != null) _lobbyPanel.style.display = DisplayStyle.None;
         if (_waitingRoomPanel != null) _waitingRoomPanel.style.display = DisplayStyle.None;
+        
+        // Muestra solo el que le pasamos por parámetro
         if (p != null) p.style.display = DisplayStyle.Flex;
     }
-
-    [System.Serializable] public class RoomData { public string name; public string host; public int players; public int max; public string[] playersList; }
-    [System.Serializable] public class RoomListWrapper { public RoomData[] items; }
 }
