@@ -15,13 +15,10 @@ app.use(express.urlencoded({ extended: true }));
 
 let activeRooms = []; // Memòria temporal de sales (3.2.3)
 
-// --- API (3.2.1) ---
+// --- RUTAS API (3.2.1) ---
+const userRoutes = require('./routes/userRoutes');
+app.use('/api/users', userRoutes);
 
-// Registre de jugador
-app.post('/api/register', (req, res) => {
-    console.log("Nou registre:", req.body.alias);
-    res.status(200).send({ message: "Registrat correctament" });
-});
 
 // Crear sala
 app.post('/api/rooms/create', (req, res) => {
