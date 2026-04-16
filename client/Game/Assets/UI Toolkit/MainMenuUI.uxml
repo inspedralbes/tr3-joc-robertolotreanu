@@ -1,36 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:Style>
-        /* TEXT QUE ESCRIUS: Daurat, Bold i sense blau */
-        .unity-text-field__input {
-            color: rgb(218, 165, 32) !important;
-            -unity-font-style: bold;
-            background-color: rgb(30, 30, 35);
-            border-width: 1px;
-            border-color: rgba(218, 165, 32, 0.3);
-            padding: 5px;
-        }
-
-        /* CANVIAR EL BLAU PER DAURAT QUAN FAS CLICK */
-        .unity-text-field__input:focus {
-            border-color: rgb(218, 165, 32);
-            outline-width: 0;
-        }
-
-        /* ETIQUETES (ÀLIES, NOM SALA) */
-        .unity-text-field__label {
-            color: rgb(218, 165, 32);
-            -unity-font-style: bold;
-            min-width: 80px;
-        }
-
-        /* SELECCIÓ DE SALA A LA LLISTA */
-        .unity-list-view__item--selected {
-            background-color: rgb(218, 165, 32) !important;
-            color: rgb(20, 20, 20) !important;
-        }
-    </ui:Style>
-
     <ui:VisualElement name="Root" style="flex-grow: 1; background-color: rgb(15, 15, 18); align-items: center; justify-content: center; padding: 50px;">
+        
         <ui:VisualElement name="LoginPanel" style="width: 380px; padding: 30px; background-color: rgba(35, 35, 40, 0.98); border-radius: 15px; border-width: 1px; border-color: rgba(255, 215, 0, 0.3);">
             <ui:Label text="El último samurai en pie" style="font-size: 24px; -unity-font-style: bold; color: rgb(218, 165, 32); -unity-text-align: middle-center; margin-bottom: 25px;" />
             <ui:TextField name="UsernameInput" label="ÀLIES" />
@@ -38,33 +8,45 @@
         </ui:VisualElement>
 
         <ui:VisualElement name="LobbyPanel" style="display: none; width: 550px; padding: 25px; background-color: rgba(35, 35, 40, 0.98); border-radius: 15px; border-width: 1px; border-color: rgba(255, 215, 0, 0.3);">
+            
             <ui:VisualElement style="flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <ui:Label text="SALES ACTIVES" style="font-size: 20px; color: rgb(255, 215, 0); -unity-font-style: bold;" />
                 <ui:Button name="RefreshButton" text="RECARREGAR" style="height: 30px; background-color: rgba(218, 165, 32, 0.2); color: rgb(218, 165, 32); border-width: 1px; border-color: rgb(218, 165, 32); border-radius: 5px; padding-left: 10px; padding-right: 10px;" />
             </ui:VisualElement>
+            
             <ui:ListView name="RoomList" style="height: 180px; background-color: rgba(0, 0, 0, 0.3); border-radius: 10px; margin-bottom: 15px;" />
-            <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-                <ui:Button name="JoinButton" text="UNIR-SE" style="width: 48%; height: 40px; background-color: rgb(218, 165, 32); -unity-font-style: bold; border-radius: 8px;" />
-                <ui:Button name="ShowCreatePanelButton" text="CREAR SALA" style="width: 48%; height: 40px; background-color: rgb(46, 139, 87); color: white; -unity-font-style: bold; border-radius: 8px;" />
+            
+            <ui:VisualElement style="margin-bottom: 15px; background-color: rgba(0, 0, 0, 0.2); padding: 12px; border-radius: 10px; border-width: 1px; border-color: rgba(218, 165, 32, 0.4);">
+                <ui:Label text="TRIA EL TEU PERSONATGE" style="font-size: 14px; color: rgb(255, 215, 0); -unity-font-style: bold; -unity-text-align: middle-center; margin-bottom: 10px;" />
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                    <ui:Button name="BtnChar0" text="NINJA" style="width: 48%; height: 35px; background-color: rgba(218, 165, 32, 0.1); color: rgb(218, 165, 32); border-color: rgb(218, 165, 32); border-width: 1px; border-radius: 6px; -unity-font-style: bold;" />
+                    <ui:Button name="BtnChar1" text="MAG" style="width: 48%; height: 35px; background-color: rgba(218, 165, 32, 0.1); color: rgb(218, 165, 32); border-color: rgb(218, 165, 32); border-width: 1px; border-radius: 6px; -unity-font-style: bold;" />
+                </ui:VisualElement>
             </ui:VisualElement>
 
+            <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                <ui:Button name="JoinButton" text="UNIR-SE" style="width: 48%; height: 40px; background-color: rgb(218, 165, 32); color: rgb(20, 20, 20); -unity-font-style: bold; border-radius: 8px;" />
+                <ui:Button name="ShowCreatePanelButton" text="CREAR SALA" style="width: 48%; height: 40px; background-color: rgb(46, 139, 87); color: white; -unity-font-style: bold; border-radius: 8px;" />
+            </ui:VisualElement>
+            
             <ui:VisualElement name="CreateRoomPopup" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgb(30, 30, 35); border-radius: 15px; padding: 30px; justify-content: center;">
                 <ui:Label text="NOVA PARTIDA" style="font-size: 18px; color: rgb(255, 215, 0); margin-bottom: 20px; -unity-text-align: middle-center; -unity-font-style: bold;" />
                 <ui:TextField name="NewRoomName" label="NOM SALA" value="DOJO 1" />
                 <ui:VisualElement style="flex-direction: row; justify-content: space-between; margin-top: 20px;">
                     <ui:Button name="CancelCreateRoomButton" text="CANCEL·LAR" style="width: 45%; background-color: rgb(178, 34, 34); color: white;" />
-                    <ui:Button name="ConfirmCreateRoomButton" text="CREAR" style="width: 45%; background-color: rgb(218, 165, 32);" />
+                    <ui:Button name="ConfirmCreateRoomButton" text="CREAR" style="width: 45%; background-color: rgb(218, 165, 32); color: rgb(20, 20, 20); -unity-font-style: bold;" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 
         <ui:VisualElement name="WaitingRoomPanel" style="display: none; width: 400px; padding: 30px; background-color: rgba(35, 35, 40, 0.98); border-radius: 15px; align-items: center;">
-            <ui:Label text="SALA D&apos;ESPERA" style="font-size: 20px; color: rgb(255, 215, 0); -unity-font-style: bold; margin-bottom: 20px;" />
+            <ui:Label text="SALA D'ESPERA" style="font-size: 20px; color: rgb(255, 215, 0); -unity-font-style: bold; margin-bottom: 20px;" />
             <ui:Label name="RoomNameLabel" text="-" style="color: white; margin-bottom: 5px; -unity-font-style: bold;" />
             <ui:Label text="JUGADORS CONNECTATS" style="font-size: 14px; color: rgb(218, 165, 32); margin-top: 10px;" />
             <ui:ListView name="PlayerList" style="width: 100%; height: 120px; background-color: rgba(0, 0, 0, 0.2); border-radius: 5px; margin-bottom: 20px;" />
             <ui:Button name="StartGameButton" text="INICIAR COMBAT" style="width: 100%; height: 50px; background-color: rgb(218, 165, 32); color: rgb(20, 20, 20); -unity-font-style: bold; border-radius: 10px;" />
-            <ui:Button name="LeaveRoomButton" text="SORTIR" style="margin-top: 15px; color: rgb(178, 34, 34); background-color: rgba(0,0,0,0); border-width: 0;" />
+            <ui:Button name="LeaveRoomButton" text="SORTIR" style="margin-top: 15px; color: rgb(178, 34, 34); background-color: rgba(0, 0, 0, 0); border-width: 0; -unity-font-style: bold;" />
         </ui:VisualElement>
+        
     </ui:VisualElement>
 </ui:UXML>

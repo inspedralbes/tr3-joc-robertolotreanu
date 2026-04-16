@@ -7,6 +7,12 @@ public class MenuManager : MonoBehaviour {
     private TextField _usernameInput, _newRoomName;
     private LoginNetworkHandler _loginHandler;
 
+    // Para guardar el número del personaje elegido
+    private int _selectedCharacterIndex = 0;
+
+    // --- LA SOLUCIÓN: Lista para arrastrar nuestros personajes desde el Inspector de Unity ---
+    public GameObject[] characterPrefabs;
+
     void OnEnable() {
         var root = GetComponent<UIDocument>().rootVisualElement;
         _loginHandler = GetComponent<LoginNetworkHandler>();
@@ -20,6 +26,13 @@ public class MenuManager : MonoBehaviour {
         // 2. Encontrar las cajas de texto
         _usernameInput = root.Q<TextField>("UsernameInput");
         _newRoomName = root.Q<TextField>("NewRoomName");
+
+        // --- Botones para elegir personaje en el Lobby ---
+        Button btnChar0 = root.Q<Button>("BtnChar0");
+        if (btnChar0 != null) btnChar0.clicked += () => { _selectedCharacterIndex = 0; Debug.Log("Elegido: Personaje 0"); };
+
+        Button btnChar1 = root.Q<Button>("BtnChar1");
+        if (btnChar1 != null) btnChar1.clicked += () => { _selectedCharacterIndex = 1; Debug.Log("Elegido: Personaje 1"); };
 
         // --- FUNCIONES DE LOS BOTONES ---
 
@@ -35,7 +48,16 @@ public class MenuManager : MonoBehaviour {
 
         // Botón UNIRSE
         root.Q<Button>("JoinButton").clicked += () => {
-            Debug.Log("¡Intentando unirse a la sala seleccionada!");
+            Debug.Log("¡Intentando unirse a la partida como cliente!");
+            
+            if (NetworkManager.Singleton != null) {
+                // Enviamos al servidor el número del personaje que hemos elegido
+                NetworkManager.Singleton.NetworkConfig.ConnectionData = System.BitConverter.GetBytes(_selectedCharacterIndex);
+
+                // Arrancamos como Cliente
+                NetworkManager.Singleton.StartClient();
+                ShowPanel(_waitingRoomPanel);
+            }
         };
 
         // Botón CREAR SALA (Abre el popup)
@@ -52,15 +74,17 @@ public class MenuManager : MonoBehaviour {
         root.Q<Button>("ConfirmCreateRoomButton").clicked += () => {
             Debug.Log("Intentando crear sala con nombre: " + _newRoomName.value);
             
-            // Comprobamos que el NetworkManager exista en la escena
             if (NetworkManager.Singleton != null) {
-                // 1. Iniciamos la conexión como Host (Servidor + Cliente a la vez)
+                // El Host también se guarda su propio personaje elegido en los datos de conexión
+                NetworkManager.Singleton.NetworkConfig.ConnectionData = System.BitConverter.GetBytes(_selectedCharacterIndex);
+                
+                // Le decimos al NetworkManager que use nuestra función especial (abajo) para aprobar conexiones
+                NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
+
+                // Iniciamos la conexión como Host
                 NetworkManager.Singleton.StartHost();
                 
-                // 2. Escondemos el popup
                 if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.None;
-                
-                // 3. Cambiamos a la pantalla de la Sala de Espera (Waiting Room)
                 ShowPanel(_waitingRoomPanel);
             } else {
                 Debug.LogError("¡OJO! No se ha encontrado el NetworkManager en la escena.");
@@ -73,10 +97,7 @@ public class MenuManager : MonoBehaviour {
         root.Q<Button>("StartGameButton").clicked += () => {
             Debug.Log("¡Cargando la escena de juego para todos!");
             
-            // Comprobamos que somos el jefe de la sala (El Server/Host)
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer) {
-                // En multijugador no se usa SceneManager normal, se usa el de NetworkManager
-                // IMPORTANTE: Asegúrate de que tu escena de juego se llama exactamente "Game"
                 NetworkManager.Singleton.SceneManager.LoadScene("Game", UnityEngine.SceneManagement.LoadSceneMode.Single);
             }
         };
@@ -86,26 +107,43 @@ public class MenuManager : MonoBehaviour {
             Debug.Log("Saliendo de la sala y apagando servidor...");
             
             if (NetworkManager.Singleton != null) {
-                // Apagamos nuestra conexión
                 NetworkManager.Singleton.Shutdown();
             }
-            // Volvemos a la lista de salas
             ShowPanel(_lobbyPanel);
         };
 
         // --- ESTADO INICIAL ---
         ShowPanel(_loginPanel);
-        // Nos aseguramos de que el popup empiece oculto al abrir el juego
         if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.None; 
     }
 
+    // --- FUNCIÓN CORREGIDA PARA LA APROBACIÓN DE CONEXIONES ---
+    private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response) {
+        // Permitimos que el jugador entre a la sala y le decimos que sí queremos crearle un avatar
+        response.Approved = true;
+        response.CreatePlayerObject = true;
+        
+        // Leemos el número que nos envió el jugador al pulsar el botón
+        int characterIndex = 0;
+        if (request.Payload != null && request.Payload.Length >= 4) {
+            characterIndex = System.BitConverter.ToInt32(request.Payload, 0);
+        }
+
+        // Miramos nuestra propia lista de personajes 'characterPrefabs' 
+        if (characterPrefabs != null && characterIndex < characterPrefabs.Length && characterPrefabs[characterIndex] != null) {
+            // LA SOLUCIÓN: Usamos "PrefabIdHash" en lugar del antiguo "GlobalObjectIdHash"
+            uint prefabHash = characterPrefabs[characterIndex].GetComponent<NetworkObject>().PrefabIdHash;
+            response.PlayerPrefabHash = prefabHash;
+        }
+        
+        response.Pending = false;
+    }
+
     void ShowPanel(VisualElement p) {
-        // Oculta todos los paneles
         if (_loginPanel != null) _loginPanel.style.display = DisplayStyle.None;
         if (_lobbyPanel != null) _lobbyPanel.style.display = DisplayStyle.None;
         if (_waitingRoomPanel != null) _waitingRoomPanel.style.display = DisplayStyle.None;
         
-        // Muestra solo el que le pasamos por parámetro
         if (p != null) p.style.display = DisplayStyle.Flex;
     }
 }
