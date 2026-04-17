@@ -374,6 +374,7 @@ GameObject:
   - component: {fileID: 1709947678}
   - component: {fileID: 1709947681}
   - component: {fileID: 1709947680}
+  - component: {fileID: 1709947682}
   m_Layer: 0
   m_Name: MenuUI
   m_TagString: Untagged
@@ -439,6 +440,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bbe0508ef85c91d8af02e85837340ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  characterPrefabs: []
+--- !u!114 &1709947682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1709947676}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d56bb512f4a55a94cb4bde71691c3094, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spriteRonin: {fileID: 815424164945274260, guid: 8131e58a55001b3d1b839aadf79eb7c1, type: 3}
+  spriteNinja: {fileID: -7394156071263476602, guid: 633bd19bd6b37404c80af5d69332b27d, type: 3}
+  spriteMonje: {fileID: -1956493571573015359, guid: 92ab82e47a0659049b7b072ef1017370, type: 3}
+  spriteKunoichi: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -30,120 +30,152 @@ public class MenuManager : MonoBehaviour
 
     void OnEnable()
     {
-        var root = GetComponent<UIDocument>().rootVisualElement;
+        var uiDocument = GetComponent<UIDocument>();
+        if (uiDocument == null || uiDocument.rootVisualElement == null) return;
+        
+        var root = uiDocument.rootVisualElement;
 
-        // Panells
+        // Panells (Seguros)
         _loginPanel       = root.Q<VisualElement>("LoginPanel");
         _modeSelectionPanel = root.Q<VisualElement>("ModeSelectionPanel");
         _lobbyPanel       = root.Q<VisualElement>("LobbyPanel");
         _waitingRoomPanel = root.Q<VisualElement>("WaitingRoomPanel");
         _createRoomPopup  = root.Q<VisualElement>("CreateRoomPopup");
 
-        // Subscripció als botons del ModeSelection
-        root.Q<Button>("BtnSoloMode").clicked += StartSoloMode;
-        root.Q<Button>("BtnMultiplayerMode").clicked += () => {
+        // Subscripció als botons del ModeSelection (Seguros)
+        Button btnSolo = root.Q<Button>("BtnSoloMode");
+        if (btnSolo != null) btnSolo.clicked += StartSoloMode;
+
+        Button btnMulti = root.Q<Button>("BtnMultiplayerMode");
+        if (btnMulti != null) btnMulti.clicked += () => {
             ShowPanel(_lobbyPanel);
             StartCoroutine(GetRooms());
         };
 
-        // Camps
+        // Camps (Seguros)
         _usernameInput = root.Q<TextField>("UsernameInput");
         _newRoomName   = root.Q<TextField>("NewRoomName");
         
-        // Etiquetes Perfil
+        // Etiquetes Perfil (Seguros)
         _nameLabel = root.Q<Label>("NameLabel");
         _statsLabel = root.Q<Label>("StatsLabel");
 
-        // Llistes
+        // Llistes (Seguros)
         _roomList   = root.Q<ListView>("RoomList");
         _playerList = root.Q<ListView>("PlayerList");
 
-        // Setup ListView de sales
-        _roomList.makeItem  = () => {
-            var label = new Label();
-            label.style.color = new StyleColor(new Color(1f, 1f, 1f, 0.85f));
-            label.style.fontSize = 12;
-            label.style.paddingLeft = 10;
-            label.style.paddingTop = 6;
-            label.style.paddingBottom = 6;
-            return label;
+        if (_roomList != null) {
+            _roomList.makeItem  = () => {
+                var label = new Label();
+                label.style.color = new StyleColor(new Color(1f, 1f, 1f, 0.85f));
+                label.style.fontSize = 12;
+                label.style.paddingLeft = 10;
+                label.style.paddingTop = 6;
+                label.style.paddingBottom = 6;
+                return label;
+            };
+            _roomList.bindItem    = (e, i) => (e as Label).text = _displayRooms[i];
+            _roomList.itemsSource = _displayRooms;
+            _roomList.fixedItemHeight = 32;
+        }
+
+        if (_playerList != null) {
+            _playerList.makeItem  = () => {
+                var label = new Label();
+                label.style.color = new StyleColor(new Color(1f, 1f, 1f, 0.85f));
+                label.style.fontSize = 12;
+                label.style.paddingLeft = 10;
+                label.style.paddingTop = 6;
+                label.style.paddingBottom = 6;
+                return label;
+            };
+            _playerList.bindItem    = (e, i) => (e as Label).text = _displayPlayers[i];
+            _playerList.itemsSource = _displayPlayers;
+            _playerList.fixedItemHeight = 32;
+        }
+
+        // Personatges Dinàmics
+        var charButtons = root.Query<Button>(className: "character-button").ToList();
+        for (int i = 0; i < charButtons.Count; i++)
+        {
+            int index = i;
+            charButtons[i].clicked += () => {
+                _selectedCharacterIndex = index;
+                // Reiniciar color per defecte a tots
+                foreach(var btn in charButtons) {
+                    btn.style.backgroundColor = new StyleColor(new Color(218/255f, 165/255f, 32/255f, 0.06f));
+                }
+                // Il·luminar l'escollit
+                charButtons[index].style.backgroundColor = new StyleColor(new Color(218/255f, 165/255f, 32/255f, 0.25f));
+            };
+        }
+
+        // LOGIN (Seguros)
+        Button btnLogin = root.Q<Button>("LoginButton");
+        if (btnLogin != null) btnLogin.clicked += () => StartCoroutine(RequestLogin());
+
+        // LOBBY (Seguros)
+        Button btnRefresh = root.Q<Button>("RefreshButton");
+        if (btnRefresh != null) btnRefresh.clicked += () => StartCoroutine(GetRooms());
+
+        Button btnJoin = root.Q<Button>("JoinButton");
+        if (btnJoin != null) btnJoin.clicked += () => TryJoinRoom();
+
+        Button btnShowCreate = root.Q<Button>("ShowCreatePanelButton");
+        if (btnShowCreate != null) btnShowCreate.clicked += () => {
+            if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.Flex;
         };
-        _roomList.bindItem    = (e, i) => (e as Label).text = _displayRooms[i];
-        _roomList.itemsSource = _displayRooms;
-        _roomList.fixedItemHeight = 32;
 
-        // Setup ListView de jugadors
-        _playerList.makeItem  = () => {
-            var label = new Label();
-            label.style.color = new StyleColor(new Color(1f, 1f, 1f, 0.85f));
-            label.style.fontSize = 12;
-            label.style.paddingLeft = 10;
-            label.style.paddingTop = 6;
-            label.style.paddingBottom = 6;
-            return label;
+        // POPUP CREAR SALA (Seguros)
+        Button btnCancelCreate = root.Q<Button>("CancelCreateRoomButton");
+        if (btnCancelCreate != null) btnCancelCreate.clicked += () => {
+            if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.None;
         };
-        _playerList.bindItem    = (e, i) => (e as Label).text = _displayPlayers[i];
-        _playerList.itemsSource = _displayPlayers;
-        _playerList.fixedItemHeight = 32;
 
-        // Personatges
-        root.Q<Button>("BtnChar0").clicked += () => SelectCharacter(0, root);
-        root.Q<Button>("BtnChar1").clicked += () => SelectCharacter(1, root);
+        Button btnConfirmCreate = root.Q<Button>("ConfirmCreateRoomButton");
+        if (btnConfirmCreate != null) btnConfirmCreate.clicked += () => StartCoroutine(CreateRoom());
 
-        // LOGIN
-        root.Q<Button>("LoginButton").clicked += () =>
-            StartCoroutine(RequestLogin());
-
-        // LOBBY
-        root.Q<Button>("RefreshButton").clicked += () =>
-            StartCoroutine(GetRooms());
-
-        root.Q<Button>("JoinButton").clicked += () =>
-            TryJoinRoom();
-
-        root.Q<Button>("ShowCreatePanelButton").clicked += () =>
-            _createRoomPopup.style.display = DisplayStyle.Flex;
-
-        // POPUP CREAR SALA
-        root.Q<Button>("CancelCreateRoomButton").clicked += () =>
-            _createRoomPopup.style.display = DisplayStyle.None;
-
-        root.Q<Button>("ConfirmCreateRoomButton").clicked += () =>
-            StartCoroutine(CreateRoom());
-
-        // SALA D'ESPERA
-        root.Q<Button>("StartGameButton").clicked += () => {
+        // SALA D'ESPERA (Seguros)
+        Button btnStartGame = root.Q<Button>("StartGameButton");
+        if (btnStartGame != null) btnStartGame.clicked += () => {
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
                 NetworkManager.Singleton.SceneManager.LoadScene(
                     "Game", UnityEngine.SceneManagement.LoadSceneMode.Single);
         };
 
-        root.Q<Button>("LeaveRoomButton").clicked += () => {
-            NetworkManager.Singleton?.Shutdown();
+        Button btnLeaveRoom = root.Q<Button>("LeaveRoomButton");
+        if (btnLeaveRoom != null) btnLeaveRoom.clicked += () => {
+            if (NetworkManager.Singleton != null) {
+                if (NetworkManager.Singleton.IsServer) {
+                    StartCoroutine(DeleteMyRoom());
+                }
+                NetworkManager.Singleton.Shutdown();
+            }
             _displayPlayers.Clear();
-            _playerList.Rebuild();
+            if (_playerList != null) _playerList.Rebuild();
             ShowPanel(_lobbyPanel);
             StartCoroutine(FetchUserStats());
         };
 
-        // Subscripció a events de Netcode per actualitzar jugadors
+        // Subscripció a events de Netcode
         if (NetworkManager.Singleton != null) {
             NetworkManager.Singleton.OnClientConnectedCallback    += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback   += OnClientDisconnected;
         }
 
-        // Comprovem si el jugador ja té una sessió guardada prèviament per ignorar el login.
+        // Lógica de inicio de sesión
         if (PlayerPrefs.HasKey("PlayerName") && !string.IsNullOrEmpty(PlayerPrefs.GetString("PlayerName")))
         {
-            _usernameInput.value = PlayerPrefs.GetString("PlayerName");
-            ShowPanel(_modeSelectionPanel); // Canviat: ara anem a selecció de modes!
+            if (_usernameInput != null) _usernameInput.value = PlayerPrefs.GetString("PlayerName");
+            ShowPanel(_modeSelectionPanel);
             StartCoroutine(FetchUserStats());
         }
         else
         {
             ShowPanel(_loginPanel);
         }
-        _createRoomPopup.style.display = DisplayStyle.None;
+        
+        if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.None;
     }
 
     void OnDisable()
@@ -158,15 +190,17 @@ public class MenuManager : MonoBehaviour
 
     IEnumerator RequestLogin()
     {
+        if (_usernameInput == null) yield break;
+
         WWWForm form = new WWWForm();
-        form.AddField("username", _usernameInput.value); // El backend demana 'username' ara (abans alias)
-        form.AddField("password", "1234"); // Enviem una contrasenya de prova fins que tinguis un input per a ella
+        form.AddField("username", _usernameInput.value); 
+        form.AddField("password", "1234"); 
 
         using (var www = UnityWebRequest.Post(_serverURL + "/users/register", form)) {
             yield return www.SendWebRequest();
             if (www.result == UnityWebRequest.Result.Success) {
                 PlayerPrefs.SetString("PlayerName", _usernameInput.value);
-                ShowPanel(_modeSelectionPanel); // Canviat: ara anem a selecció de modes!
+                ShowPanel(_modeSelectionPanel); 
                 StartCoroutine(FetchUserStats());
             } else {
                 Debug.LogWarning("Login fallat: " + www.error + " - " + www.downloadHandler.text);
@@ -193,8 +227,7 @@ public class MenuManager : MonoBehaviour
                 }
             } else {
                 if (_statsLabel != null) _statsLabel.text = "Error Xarxa/Sessió invàlida.";
-                Debug.LogWarning("La sessió no existeix al Servidor (reiniciat?). Estem evitant fer Logout brutal i permetem el Singleplayer offline...");
-                // PlayerPrefs.DeleteKey("PlayerName"); <-- S'ha cancel·lat perquè permet jugar offline en cas de caiguda!
+                Debug.LogWarning("La sessió no existeix al Servidor. Permetem el Singleplayer offline...");
             }
         }
     }
@@ -211,13 +244,15 @@ public class MenuManager : MonoBehaviour
                 _displayRooms.Clear();
                 foreach (var r in wrapper.items)
                     _displayRooms.Add($"⚔  {r.name}   {r.players}/{r.max}  —  {r.host}");
-                _roomList.Rebuild();
+                if (_roomList != null) _roomList.Rebuild();
             }
         }
     }
 
     IEnumerator CreateRoom()
     {
+        if (_newRoomName == null) yield break;
+
         WWWForm form = new WWWForm();
         form.AddField("roomName", _newRoomName.value);
         form.AddField("hostName", PlayerPrefs.GetString("PlayerName"));
@@ -227,19 +262,39 @@ public class MenuManager : MonoBehaviour
             yield return www.SendWebRequest();
         }
 
-        _createRoomPopup.style.display = DisplayStyle.None;
+        if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.None;
 
-        // Arrancar com a Host de Netcode
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening) {
+            NetworkManager.Singleton.Shutdown();
+            while (NetworkManager.Singleton.ShutdownInProgress) {
+                yield return null;
+            }
+        }
+
         NetworkManager.Singleton.NetworkConfig.ConnectionData =
             System.BitConverter.GetBytes(_selectedCharacterIndex);
+        NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
         NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
         NetworkManager.Singleton.StartHost();
 
         AddPlayer(PlayerPrefs.GetString("PlayerName") + " (host)");
         ShowPanel(_waitingRoomPanel);
 
-        var label = _waitingRoomPanel.Q<Label>("RoomNameLabel");
-        if (label != null) label.text = _newRoomName.value;
+        if (_waitingRoomPanel != null) {
+            var label = _waitingRoomPanel.Q<Label>("RoomNameLabel");
+            if (label != null) label.text = _newRoomName.value;
+        }
+    }
+
+    IEnumerator DeleteMyRoom()
+    {
+        string hostName = PlayerPrefs.GetString("PlayerName");
+        using (var www = UnityWebRequest.Delete(_serverURL + "/rooms/delete/" + hostName)) {
+            yield return www.SendWebRequest();
+            if (www.result != UnityWebRequest.Result.Success) {
+                Debug.LogWarning("Error esborrant la sala: " + www.error);
+            }
+        }
     }
 
     void TryJoinRoom()
@@ -255,36 +310,26 @@ public class MenuManager : MonoBehaviour
 
     void OnClientConnected(ulong clientId)
     {
-        string name = NetworkManager.Singleton.IsServer
-            ? $"Jugador {clientId}"
-            : PlayerPrefs.GetString("PlayerName");
+        if (clientId == NetworkManager.Singleton.LocalClientId) {
+            return;
+        }
+
+        string name = $"Jugador {clientId}";
         AddPlayer(name);
     }
 
     void OnClientDisconnected(ulong clientId)
     {
-        // Simplificat: reconstrueix la llista sense el clientId
         if (_displayPlayers.Count > 0) {
             _displayPlayers.RemoveAt(_displayPlayers.Count - 1);
-            _playerList.Rebuild();
+            if (_playerList != null) _playerList.Rebuild();
         }
     }
 
     void AddPlayer(string name)
     {
         _displayPlayers.Add(name);
-        _playerList.Rebuild();
-    }
-
-    // ── Personatge ───────────────────────────────────────────────────────────
-
-    void SelectCharacter(int index, VisualElement root)
-    {
-        _selectedCharacterIndex = index;
-        root.Q<Button>("BtnChar0").style.backgroundColor =
-            new StyleColor(new Color(218/255f, 165/255f, 32/255f, index == 0 ? 0.25f : 0.06f));
-        root.Q<Button>("BtnChar1").style.backgroundColor =
-            new StyleColor(new Color(218/255f, 165/255f, 32/255f, index == 1 ? 0.25f : 0.06f));
+        if (_playerList != null) _playerList.Rebuild();
     }
 
     // ── Aprovació connexions ─────────────────────────────────────────────────
@@ -314,17 +359,27 @@ public class MenuManager : MonoBehaviour
 
     private void StartSoloMode()
     {
-        // 1. Apaguem explícitament els Sockets ocupats prèviament per curar en salut
+        StartCoroutine(RestartHostCoroutine());
+    }
+
+    private IEnumerator RestartHostCoroutine()
+    {
         if (NetworkManager.Singleton != null) {
             NetworkManager.Singleton.Shutdown();
+            
+            while (NetworkManager.Singleton.ShutdownInProgress) {
+                yield return null;
+            }
         }
 
-        // 2. Configurem partides de tipus 1 jugador sense exportar res a la Xarxa externa
         Debug.Log("Iniciant Entrenament Solitari...");
         
-        // Simulem com si fóssim un host per tal que Netcode ens permeti interactuar amb NetworkObjects
         NetworkManager.Singleton.StartHost();
-        _waitingRoomPanel.Q<Label>("RoomNameLabel").text = "Entrenament";
+        
+        if (_waitingRoomPanel != null) {
+            var label = _waitingRoomPanel.Q<Label>("RoomNameLabel");
+            if (label != null) label.text = "Entrenament";
+        }
         
         ShowPanel(_waitingRoomPanel);
     }

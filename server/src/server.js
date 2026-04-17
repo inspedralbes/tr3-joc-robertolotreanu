@@ -50,11 +50,19 @@ app.post('/api/rooms/join', (req, res) => {
     }
 });
 
-//Borrar sales 
+//Borrar sales (només de suport o global)
 app.post('/api/rooms/clear', (req, res) => {
-    rooms = []; // Vacía la lista de salas
-    console.log("Salas limpiadas por el cliente");
+    activeRooms = []; // Vacía la lista de salas correctamente
+    console.log("Salas limpiadas globalmente");
     res.send("OK");
+});
+
+// Esborrar la sala específica d'un Host quan aquest la cancel·la
+app.delete('/api/rooms/delete/:hostName', (req, res) => {
+    const hostName = req.params.hostName;
+    activeRooms = activeRooms.filter(r => r.host !== hostName);
+    console.log(`S'ha eliminat la sala del host ${hostName}`);
+    res.status(200).send("OK");
 });
 
 // Llistar sales (Per al botó Recarregar de Unity)

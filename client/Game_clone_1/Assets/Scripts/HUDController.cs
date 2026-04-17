@@ -54,10 +54,38 @@ public class HUDController : MonoBehaviour
         Time.timeScale = 0f; 
         gameOverPanel.style.display = DisplayStyle.Flex;
         if (finalScoreLabel != null)
-            finalScoreLabel.text = $"Puntuación Final: {puntosTotales}";
+            finalScoreLabel.text = $"Puntuación Final: {puntosTotales} | Temps: {tiempoTranscurrido:F2}s";
         
         // CORRECCIÓN AQUÍ: Usamos UnityEngine.Cursor para evitar la ambigüedad
         UnityEngine.Cursor.lockState = CursorLockMode.None;
         UnityEngine.Cursor.visible = true;
+
+        // Enviar la puntuación al servidor
+        if (PlayerPrefs.HasKey("PlayerName"))
+        {
+            StartCoroutine(ActualizarStatsServidor());
+        }
+    }
+
+    private System.Collections.IEnumerator ActualizarStatsServidor()
+    {
+        string username = PlayerPrefs.GetString("PlayerName");
+        string serverURL = "http://localhost:3000/api";
+
+        UnityEngine.WWWForm form = new UnityEngine.WWWForm();
+        form.AddField("timeSurvived", tiempoTranscurrido.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+
+        using (var www = UnityEngine.Networking.UnityWebRequest.Post(serverURL + "/users/" + username + "/update-stats", form))
+        {
+            yield return www.SendWebRequest();
+            if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Puntuació actualitzada al servidor correctament!");
+            }
+            else
+            {
+                Debug.LogWarning("No s'ha pogut actualitzar la puntuació: " + www.error);
+            }
+        }
     }
 }

@@ -51,6 +51,20 @@ class UserService {
 
         return user;
     }
+
+    async updateUserStats(username, timeSurvived) {
+        const user = await userRepository.findByUsername(username);
+        if (!user) {
+            throw new Error("Usuari no trobat");
+        }
+        
+        user.stats.gamesPlayed += 1;
+        if (timeSurvived > user.stats.bestTime) {
+            user.stats.bestTime = timeSurvived;
+        }
+
+        return await userRepository.update(user);
+    }
 }
 
 module.exports = new UserService();

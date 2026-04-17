@@ -44,6 +44,22 @@ class UserController {
             return res.status(404).json({ error: error.message });
         }
     }
+
+    async updateStats(req, res) {
+        try {
+            const username = req.params.username;
+            const { timeSurvived } = req.body;
+            
+            if (timeSurvived === undefined) {
+                return res.status(400).json({ message: "Cal informar el temps sobreviscut (timeSurvived)" });
+            }
+
+            const updatedUser = await userService.updateUserStats(username, parseFloat(timeSurvived));
+            return res.status(200).json(updatedUser.stats);
+        } catch (error) {
+            return res.status(400).json({ error: error.message });
+        }
+    }
 }
 
 module.exports = new UserController();
