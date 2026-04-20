@@ -4,6 +4,7 @@ using UnityEngine.Networking;
 using Unity.Netcode;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode.Transports.UTP;
 
 public class MenuManager : MonoBehaviour
 {
@@ -11,13 +12,14 @@ public class MenuManager : MonoBehaviour
     public GameObject[] characterPrefabs;
 
     // --- Panells ---
+    private VisualElement _root;
     private VisualElement _loginPanel, _modeSelectionPanel, _lobbyPanel, _waitingRoomPanel, _createRoomPopup;
 
     // --- Camps de text ---
     private TextField _usernameInput, _newRoomName;
 
     // --- Etiquetes de Perfil ---
-    private Label _nameLabel, _statsLabel;
+    private Label _nameLabel, _statsLabel, _loginStatusLabel;
 
     // --- Llistes ---
     private ListView _roomList, _playerList;
@@ -33,7 +35,11 @@ public class MenuManager : MonoBehaviour
         var uiDocument = GetComponent<UIDocument>();
         if (uiDocument == null || uiDocument.rootVisualElement == null) return;
         
-        var root = uiDocument.rootVisualElement;
+        Debug.Log(">>> MenuManager [VERSION 2] LOADED! <<<");
+        Debug.Log(">>> UXML Asset: " + uiDocument.visualTreeAsset.name + " <<<");
+
+        _root = uiDocument.rootVisualElement;
+        var root = _root;
 
         // Panells (Seguros)
         _loginPanel       = root.Q<VisualElement>("LoginPanel");
@@ -59,6 +65,7 @@ public class MenuManager : MonoBehaviour
         // Etiquetes Perfil (Seguros)
         _nameLabel = root.Q<Label>("NameLabel");
         _statsLabel = root.Q<Label>("StatsLabel");
+        _loginStatusLabel = root.Q<Label>("LoginStatusLabel");
 
         // Llistes (Seguros)
         _roomList   = root.Q<ListView>("RoomList");
@@ -96,6 +103,7 @@ public class MenuManager : MonoBehaviour
 
         // Personatges Dinàmics
         var charButtons = root.Query<Button>(className: "character-button").ToList();
+        Debug.Log(">>> Trobats " + charButtons.Count + " botons amb la classe 'character-button' <<<");
         for (int i = 0; i < charButtons.Count; i++)
         {
             int index = i;
@@ -138,9 +146,13 @@ public class MenuManager : MonoBehaviour
         // SALA D'ESPERA (Seguros)
         Button btnStartGame = root.Q<Button>("StartGameButton");
         if (btnStartGame != null) btnStartGame.clicked += () => {
-            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer) {
+                // Amagem el menú abans de carregar la escena de joc
+                if (_root != null) _root.style.display = DisplayStyle.None;
+                
                 NetworkManager.Singleton.SceneManager.LoadScene(
                     "Game", UnityEngine.SceneManagement.LoadSceneMode.Single);
+            }
         };
 
         Button btnLeaveRoom = root.Q<Button>("LeaveRoomButton");
@@ -178,6 +190,15 @@ public class MenuManager : MonoBehaviour
         if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.None;
     }
 
+    private void OnApplicationQuit()
+    {
+        // Forçar el tancament de la xarxa en sortir per evitar errors de "Dispose"
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+    }
+
     void OnDisable()
     {
         if (NetworkManager.Singleton != null) {
@@ -190,22 +211,61 @@ public class MenuManager : MonoBehaviour
 
     IEnumerator RequestLogin()
     {
-        if (_usernameInput == null) yield break;
+        if (_usernameInput == null || string.IsNullOrEmpty(_usernameInput.value)) {
+            if (_loginStatusLabel != null) _loginStatusLabel.text = "Escriu un nom d'usuari";
+            yield break;
+        }
 
-        WWWForm form = new WWWForm();
-        form.AddField("username", _usernameInput.value); 
-        form.AddField("password", "1234"); 
+        if (_loginStatusLabel != null) _loginStatusLabel.text = "Iniciant sessió...";
 
-        using (var www = UnityWebRequest.Post(_serverURL + "/users/register", form)) {
+        WWWForm loginForm = new WWWForm();
+        loginForm.AddField("username", _usernameInput.value); 
+        loginForm.AddField("password", "1234"); 
+
+        // 1. Intentem LOGUEJAR
+        using (var www = UnityWebRequest.Post(_serverURL + "/users/login", loginForm)) {
             yield return www.SendWebRequest();
+            
             if (www.result == UnityWebRequest.Result.Success) {
-                PlayerPrefs.SetString("PlayerName", _usernameInput.value);
-                ShowPanel(_modeSelectionPanel); 
-                StartCoroutine(FetchUserStats());
+                HandleLoginSuccess();
+                yield break;
+            } else if (www.responseCode == 401 || www.responseCode == 404) {
+                // Si l'usuari no existeix, intentem REGISTRAR
+                if (_loginStatusLabel != null) _loginStatusLabel.text = "Creant usuari nou...";
+                
+                WWWForm regForm = new WWWForm();
+                regForm.AddField("username", _usernameInput.value);
+                regForm.AddField("password", "1234");
+
+                using (var wwwReg = UnityWebRequest.Post(_serverURL + "/users/register", regForm)) {
+                    yield return wwwReg.SendWebRequest();
+                    if (wwwReg.result == UnityWebRequest.Result.Success) {
+                        HandleLoginSuccess();
+                    } else {
+                        if (_loginStatusLabel != null) {
+                            _loginStatusLabel.text = "Error al registrar: " + wwwReg.downloadHandler.text;
+                            _loginStatusLabel.style.color = Color.red;
+                        }
+                    }
+                }
             } else {
-                Debug.LogWarning("Login fallat: " + www.error + " - " + www.downloadHandler.text);
+                if (_loginStatusLabel != null) {
+                    _loginStatusLabel.text = "Error de xarxa: " + www.error;
+                    _loginStatusLabel.style.color = Color.red;
+                }
             }
         }
+    }
+
+    private void HandleLoginSuccess()
+    {
+        if (_loginStatusLabel != null) {
+            _loginStatusLabel.text = "Benvingut!";
+            _loginStatusLabel.style.color = new Color(0.16f, 0.48f, 0.31f); // Un verd fosc bonic
+        }
+        PlayerPrefs.SetString("PlayerName", _usernameInput.value);
+        ShowPanel(_modeSelectionPanel); 
+        StartCoroutine(FetchUserStats());
     }
 
     // ── Perfil d'Usuari ────────────────────────────────────────────────────────
@@ -364,17 +424,35 @@ public class MenuManager : MonoBehaviour
 
     private IEnumerator RestartHostCoroutine()
     {
-        if (NetworkManager.Singleton != null) {
+        if (NetworkManager.Singleton != null && (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsClient)) {
+            Debug.Log("Aturant sessió anterior...");
             NetworkManager.Singleton.Shutdown();
             
-            while (NetworkManager.Singleton.ShutdownInProgress) {
+            float timeout = 2.0f;
+            while (NetworkManager.Singleton.ShutdownInProgress && timeout > 0) {
+                timeout -= Time.deltaTime;
                 yield return null;
             }
+            yield return new WaitForSeconds(0.5f); 
         }
 
         Debug.Log("Iniciant Entrenament Solitari...");
         
-        NetworkManager.Singleton.StartHost();
+        // Intentem canviar el port a 0 (assignació aleatòria pel SO)
+        // Això elimina definitivament el conflicte de "Address already in use"
+        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        if (transport != null) {
+            transport.ConnectionData.Port = 0; 
+        }
+        
+        if (NetworkManager.Singleton != null) {
+            // Configurem l'aprovació per al mode Solo (Host) per passar el personatge
+            NetworkManager.Singleton.NetworkConfig.ConnectionData = System.BitConverter.GetBytes(_selectedCharacterIndex);
+            NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
+            NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
+            
+            NetworkManager.Singleton.StartHost();
+        }
         
         if (_waitingRoomPanel != null) {
             var label = _waitingRoomPanel.Q<Label>("RoomNameLabel");

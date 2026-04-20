@@ -8,5 +8,25 @@
       "gamesPlayed": 1,
       "bestTime": 6.42
     }
+  },
+  {
+    "id": 1776672725842,
+    "username": "Roberto",
+    "password": "$2b$10$.f8Hzsw7PAqUCfJ/YSOii.WrQipsSdNeH7eY4lfaNJmYi9.N8LeI.",
+    "createdAt": "2026-04-20T08:12:05.842Z",
+    "stats": {
+      "gamesPlayed": 15,
+      "bestTime": 30.14
+    }
+  },
+  {
+    "id": 1776673188418,
+    "username": "testuser",
+    "password": "$2b$10$dCBBYIK/Dsk1MOYnDCdiRO6xhbvKYx56Nfaox1Iw1tyqAvXLH9fFG",
+    "createdAt": "2026-04-20T08:19:48.418Z",
+    "stats": {
+      "gamesPlayed": 0,
+      "bestTime": 0
+    }
   }
 ]
