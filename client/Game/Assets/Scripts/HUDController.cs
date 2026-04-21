@@ -22,6 +22,10 @@ public class HUDController : MonoBehaviour
 
     void OnEnable()
     {
+        tiempoTranscurrido = 0f;
+        nextLeaderboardUpdate = 0f;
+        botsMuertos.Clear();
+
         var uiDoc = GetComponent<UIDocument>();
         if (uiDoc == null || uiDoc.rootVisualElement == null) return;
         var root = uiDoc.rootVisualElement;
@@ -45,7 +49,10 @@ public class HUDController : MonoBehaviour
         Time.timeScale = 1f;
 
         if (restartButton != null)
-            restartButton.clicked += () => SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        {
+            restartButton.clicked += () => StartCoroutine(ReturnToMenuSafe()); 
+        }
+        
         if (menuButton != null)
         {
             menuButton.clicked += () => StartCoroutine(ReturnToMenuSafe());
@@ -56,19 +63,17 @@ public class HUDController : MonoBehaviour
     {
         if (NetworkManager.Singleton != null)
         {
-            Debug.Log("[HUD] Cerrando red...");
+            Debug.Log("[HUD] Cerrando red y destruyendo NetworkManager persistente...");
             NetworkManager.Singleton.Shutdown();
             
-            // Esperar activamente a que el Shutdown termine
-            float timeout = Time.realtimeSinceStartup + 2.0f;
-            while (NetworkManager.Singleton.ShutdownInProgress && Time.realtimeSinceStartup < timeout)
-            {
-                yield return null;
-            }
-            // Delay extra para que el SO suelte el puerto UDP
-            yield return new WaitForSecondsRealtime(1.0f); 
+            // Destruimos el GameObject de inmediato (DestroyImmediate) para evitar carreras
+            // de inicio donde el nuevo NetworkManager del Lobby se suicida porque este aún "existe" parcialamente.
+            DestroyImmediate(NetworkManager.Singleton.gameObject);
         }
-        
+
+        // Petit delay per alliberar el port UDP del SO
+        yield return new WaitForSecondsRealtime(0.5f);
+
         Debug.Log("[HUD] Cargando Lobby...");
         SceneManager.LoadScene("Lobby");
     }

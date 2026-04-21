@@ -3,7 +3,7 @@ using System;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks; // Añadido para poder usar Task
+using System.Threading.Tasks; 
 using System.Collections.Concurrent;
 
 /// <summary>
@@ -21,6 +21,9 @@ public class GameWebSocketClient : MonoBehaviour
     private CancellationTokenSource _cts;
     private ConcurrentQueue<string> _sendQueue = new ConcurrentQueue<string>();
     private bool _connected = false;
+    
+    // Variable per guardar el nom des del fil principal
+    private string _playerName;
 
     public static GameWebSocketClient Instance { get; private set; }
 
@@ -28,13 +31,17 @@ public class GameWebSocketClient : MonoBehaviour
     
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        // En lugar de DontDestroyOnLoad y Destroy(gameObject), 
+        // simplemente nos registramos como la instancia ACTIVA de esta escena.
+        // Esto evita destruir TODO el GameManager (y corromper Netcode).
         Instance = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
     {
+        // 1. LLEGIM EL PLAYERPREFS AQUÍ (Fil principal de Unity, 100% segur)
+        _playerName = PlayerPrefs.GetString("PlayerName", "Jugador");
+
         _cts    = new CancellationTokenSource();
         _thread = new Thread(WorkerThread) { IsBackground = true, Name = "WS-GameClient" };
         _thread.Start();
@@ -59,13 +66,12 @@ public class GameWebSocketClient : MonoBehaviour
             _connected = true;
             Debug.Log($"[WS] Connectat a {wsUrl}");
 
-            // Enviar missatge de connexio
-            string nom = PlayerPrefs.GetString("PlayerName", "Jugador");
-            Envia($"{{\"type\":\"connected\",\"player\":\"{E(nom)}\"}}");
+            // 2. USEM LA VARIABLE GUARDADA (No cridem a PlayerPrefs aquí dins)
+            Envia($"{{\"type\":\"connected\",\"player\":\"{E(_playerName)}\"}}");
 
             // Bucle d'enviament i recepció
             var buffer = new byte[2048];
-            Task<WebSocketReceiveResult> receiveTask = null; // Guardamos la tarea de recepción aquí
+            Task<WebSocketReceiveResult> receiveTask = null; 
 
             while (!_cts.IsCancellationRequested && _ws.State == WebSocketState.Open)
             {

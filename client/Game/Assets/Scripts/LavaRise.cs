@@ -59,6 +59,7 @@ public class LavaRise : NetworkBehaviour
     {
         if (IsServer)
         {
+            _jugadoresMuertos.Clear();
             _totalJugadores = NetworkManager.Singleton.ConnectedClientsIds.Count;
             Debug.Log($"[LavaRise] Partida amb {_totalJugadores} jugadors.");
         }
@@ -83,18 +84,36 @@ public class LavaRise : NetworkBehaviour
         transform.position = targetPosition;
     }
 
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        OnTriggerEnter2D(other);
+    }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         PlayerMovement pm = other.GetComponent<PlayerMovement>();
         if (pm == null) return;
+
+        // Si ya está muerto, ignoramos (evita spam de notificaciones)
+        if (!pm.isAlive.Value) return;
 
         HUDController hud = Object.FindFirstObjectByType<HUDController>();
         if (hud == null) return;
 
         if (pm.isBot)
         {
-            hud.RegistrarMuertBot($"Bot {hud.NumBotsMuertos() + 1}", hud.TiempoActual());
-            other.gameObject.SetActive(false);
+            if (IsServer)
+            {
+                // Marcamos como muerto para que el HUD sepa que es una muerte
+                pm.isAlive.Value = false;
+                
+                hud.RegistrarMuertBot($"Bot {hud.NumBotsMuertos() + 1}", hud.TiempoActual());
+                var netObj = other.GetComponent<NetworkObject>();
+                if (netObj != null && netObj.IsSpawned)
+                {
+                    netObj.Despawn(true);
+                }
+            }
         }
         else if (!pm.isBot && pm.IsOwner)
         {

@@ -15,8 +15,8 @@
     "password": "$2b$10$.f8Hzsw7PAqUCfJ/YSOii.WrQipsSdNeH7eY4lfaNJmYi9.N8LeI.",
     "createdAt": "2026-04-20T08:12:05.842Z",
     "stats": {
-      "gamesPlayed": 132,
-      "bestTime": 53.99
+      "gamesPlayed": 161,
+      "bestTime": 54.02
     }
   },
   {
@@ -35,7 +35,7 @@
     "password": "$2b$10$Kxmk1ut9SiaXECNVKDrAfulpLx5wKs7Qw6QQEZMA1ExMozXSzRwbu",
     "createdAt": "2026-04-20T12:00:35.546Z",
     "stats": {
-      "gamesPlayed": 9,
+      "gamesPlayed": 10,
       "bestTime": 7.34
     }
   },
@@ -97,6 +97,16 @@
     "stats": {
       "gamesPlayed": 2,
       "bestTime": 2.06
+    }
+  },
+  {
+    "id": 1776759222854,
+    "username": "ROberto2",
+    "password": "$2b$10$iB02KjvOPVjJucPqbbGe4OZwVSlWfukzJDLwWnmJO9ZKSE8TApttm",
+    "createdAt": "2026-04-21T08:13:42.854Z",
+    "stats": {
+      "gamesPlayed": 0,
+      "bestTime": 0
     }
   }
 ]

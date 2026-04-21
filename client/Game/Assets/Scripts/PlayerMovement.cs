@@ -45,21 +45,37 @@ public class PlayerMovement : NetworkBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         
+        // Netejar la referència estàtica de la sessió anterior per evitar
+        // que apunti a un objecte destuït de la partida anterior.
+        if (LocalPlayer != null && LocalPlayer.gameObject == null)
+        {
+            Debug.Log("<color=blue>[PlayerMovement]</color> Awake: Se encontró un LocalPlayer destruido. Limpiando referencia.");
+            LocalPlayer = null;
+        }
+        
         // ¡Magia aquí! Usamos 'GetComponentInChildren' porque sabemos que el dibujo
         // y el animador los tienes colgados en el "hijo" dentro del Prefab principal.
         animator = GetComponentInChildren<Animator>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        
+        if (animator == null) Debug.LogWarning("<color=blue>[PlayerMovement]</color> Animator no encontrado en los hijos.");
+        if (spriteRenderer == null) Debug.LogWarning("<color=blue>[PlayerMovement]</color> SpriteRenderer no encontrado en los hijos.");
     }
 
     public override void OnNetworkSpawn()
     {
+        Debug.Log($"<color=blue>[PlayerMovement]</color> OnNetworkSpawn llamado para {gameObject.name}. IsOwner: {IsOwner}, IsServer: {IsServer}, IsBot: {isBot}");
+
         if (IsOwner && NetworkObject.IsPlayerObject)
         {
             LocalPlayer = this;
-            Debug.Log($"[PlayerMovement] LocalPlayer assignat: {gameObject.name} (ID: {OwnerClientId})");
+            isGrounded = false; // Reset per si quedava true de la sessió anterior
+            jumpRequested = false;
+            Debug.Log($"<color=green>[PlayerMovement OK]</color> LocalPlayer asignado exitosamente: {gameObject.name} (ID: {OwnerClientId})");
 
-            // Enviar el nom al servidor per a que l'emmagatzemi i altres el puguin llegir
+            // Enviar el nom al servidor per a que l'emmagatzemi y otros lo lean
             string myName = PlayerPrefs.GetString("PlayerName", $"Jugador{OwnerClientId}");
+            Debug.Log($"<color=blue>[PlayerMovement]</color> Enviando mi nombre al servidor: {myName}");
             SetPlayerNameServerRpc(new FixedString64Bytes(myName));
 
             // Teletransport inicial al carregar escena
@@ -67,6 +83,7 @@ public class PlayerMovement : NetworkBehaviour
             {
                 transform.position = new Vector3(0, 1, 0);
                 rb.linearVelocity = Vector2.zero;
+                isGrounded = false;
             };
         }
         else
@@ -161,12 +178,31 @@ public class PlayerMovement : NetworkBehaviour
         // remotos pongan la velocidad a 0 y "frenen" al personaje.
         if (!IsOwner && !isBot) return;
 
+        // --- SOLUCIÓ ROBUSTA PER AL SUELO ---
+        // En lloc de confiar en OnCollisionExit2D (que falla si toques una paret),
+        // avaluem TOTS els contactes actuals cada frame físic.
+        isGrounded = false;
+        ContactPoint2D[] contacts = new ContactPoint2D[10];
+        int colCount = rb.GetContacts(contacts);
+        for(int i = 0; i < colCount; i++) 
+        {
+            if(contacts[i].normal.y > 0.6f) 
+            {
+                isGrounded = true; 
+                break;
+            }
+        }
+
         // 2. Aplicación de movimiento
         rb.linearVelocity = new Vector2(horizontalInput * speed, rb.linearVelocity.y);
 
-        if (jumpRequested)
+        if (jumpRequested && isGrounded)
         {
             ApplyJump();
+        }
+        else
+        {
+            jumpRequested = false; // Reset if not grounded but requested
         }
     }
 
@@ -178,34 +214,5 @@ public class PlayerMovement : NetworkBehaviour
         jumpRequested = false;
         isGrounded = false;
         lastJumpTime = Time.time;
-    }
-
-
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        EvaluarSuelo(collision);
-    }
-
-    private void OnCollisionStay2D(Collision2D collision)
-    {
-        EvaluarSuelo(collision);
-    }
-
-    private void EvaluarSuelo(Collision2D collision)
-    {
-        // Detección de suelo por ángulo de contacto
-        foreach (ContactPoint2D contact in collision.contacts)
-        {
-            if (contact.normal.y > 0.6f)
-            {
-                isGrounded = true;
-                break;
-            }
-        }
-    }
-
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-        isGrounded = false;
     }
 }

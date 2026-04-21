@@ -1,32 +1,31 @@
 using UnityEngine;
-using Unity.Netcode;
 using System.Collections.Generic;
+using Unity.Netcode;
 
-public class BotAI : NetworkBehaviour
+public class BotAI : MonoBehaviour
 {
     private PlayerMovement _movement;
     private Transform _targetPlayer;
     private float _repathTimer;
 
-    public override void OnNetworkSpawn()
+    public void Initialize()
     {
-        // Un objeto de red solo debe ser un Bot si NO es un PlayerObject
-        if (!IsServer || NetworkObject.IsPlayerObject) 
-        {
-            enabled = false;
-            return;
-        }
-        
+        Debug.Log($"<color=magenta>[BOT AI]</color> Inicializando IA para el bot {gameObject.name}");
         _movement = GetComponent<PlayerMovement>();
         if (_movement != null) 
         {
             _movement.isBot = true;
+            Debug.Log($"<color=magenta>[BOT AI]</color> PlayerMovement detectado y configurado como bot en {gameObject.name}");
+        }
+        else
+        {
+            Debug.LogError($"<color=red>[BOT AI ERROR]</color> {gameObject.name} no tiene PlayerMovement!");
         }
     }
 
     private void Update()
     {
-        if (!IsServer || _movement == null) return;
+        if (_movement == null) return;
 
         _repathTimer -= Time.deltaTime;
         if (_repathTimer <= 0f)

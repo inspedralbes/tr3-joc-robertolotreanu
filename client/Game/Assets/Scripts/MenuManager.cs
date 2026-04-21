@@ -760,11 +760,12 @@ public class MenuManager : MonoBehaviour
         // el mode entrenament falli. Solo no necessita un port fix.
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
         if (transport != null) {
-            transport.SetConnectionData(HOST_ADDRESS, (ushort)0); // Port 0 = dinàmic, mai falla
+            // Asumimos que HOST_ADDRESS existe arriba en tu script (ej. "127.0.0.1")
+            transport.SetConnectionData(HOST_ADDRESS, (ushort)0); 
         }
         
         if (NetworkManager.Singleton != null) {
-            // Configurem l'aprovació per al mode Solo (Host) copiando la construcción de bytes del modo Multi
+            // Configurem l'aprovació per al mode Solo
             string pName = PlayerPrefs.GetString("PlayerName", "Host (Solo)");
             byte[] nameBytes = System.Text.Encoding.UTF8.GetBytes(pName);
             byte[] payload = new byte[4 + nameBytes.Length];
@@ -780,7 +781,30 @@ public class MenuManager : MonoBehaviour
 
             // Registrar receptor per al mode Solo
             LobbySync.Instance?.RegistrarReceptor();
+
+            // Esperar que IsServer sigui real
+            float waitTimeout = 3.0f;
+            while (!NetworkManager.Singleton.IsServer && waitTimeout > 0)
+            {
+                waitTimeout -= Time.deltaTime;
+                yield return null;
+            }
+
+            if (!NetworkManager.Singleton.IsServer)
+            {
+                Debug.LogError("[SOLO] StartHost() va fallar: IsServer és FALSE després de 3s.");
+                yield break;
+            }
+
+            Debug.Log("[SOLO] Host arrancat correctament. IsServer = " + NetworkManager.Singleton.IsServer);
         }
+        // The list is cleared initially. Users add bots with the + BOT button.
+        _botCount = 0; 
+        PlayerPrefs.SetInt("PendingBots", _botCount);
+
+        // Guardar l'índex del personatge seleccionat per a l'escena de joc
+        PlayerPrefs.SetInt("SelectedCharacter", _selectedCharacterIndex);
+        PlayerPrefs.Save();
         
         var btnAddBot = _root.Q<Button>("AddBotButton");
         if (btnAddBot != null) btnAddBot.style.display = DisplayStyle.Flex;
@@ -792,7 +816,6 @@ public class MenuManager : MonoBehaviour
         
         ShowMiddlePanel(_waitingRoomPanel);
     }
-
     // ── Utils ────────────────────────────────────────────────────────────────
 
     void ShowLeftPanel(VisualElement p)
@@ -821,15 +844,35 @@ public class MenuManager : MonoBehaviour
     {
         if (_root == null) return;
         var preview = _root.Q<VisualElement>("CharacterSpritePreview");
-        
-        if (preview != null && characterPrefabs != null && index < characterPrefabs.Length && characterPrefabs[index] != null)
+
+        if (preview == null)
         {
-            // Intentar arrancar el sprite del Renderer hijo
-            var sr = characterPrefabs[index].GetComponentInChildren<SpriteRenderer>();
-            if (sr != null && sr.sprite != null)
-            {
-                preview.style.backgroundImage = new StyleBackground(sr.sprite);
-            }
+            Debug.LogWarning("[Preview] No s'ha trobat 'CharacterSpritePreview' al UXML.");
+            return;
+        }
+
+        if (characterPrefabs == null || characterPrefabs.Length == 0)
+        {
+            Debug.LogError("[Preview] 'characterPrefabs' està buit! Assigna els prefabs al Inspector del MenuUI.");
+            return;
+        }
+
+        if (index >= characterPrefabs.Length || characterPrefabs[index] == null)
+        {
+            Debug.LogWarning($"[Preview] Prefab[{index}] és null o fora de rang.");
+            return;
+        }
+
+        // Intentar arrancar el sprite del Renderer hijo
+        var sr = characterPrefabs[index].GetComponentInChildren<SpriteRenderer>();
+        if (sr != null && sr.sprite != null)
+        {
+            preview.style.backgroundImage = new StyleBackground(sr.sprite);
+            preview.style.unityBackgroundScaleMode = new StyleEnum<ScaleMode>(ScaleMode.ScaleToFit);
+        }
+        else
+        {
+            Debug.LogWarning($"[Preview] El prefab[{index}] no té SpriteRenderer o el sprite és null.");
         }
     }
 }

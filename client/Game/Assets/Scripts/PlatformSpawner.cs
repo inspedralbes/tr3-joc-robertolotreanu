@@ -8,12 +8,12 @@ public class PlatformSpawner : MonoBehaviour
     public Transform player;          
     
     [Header("Configuració de Distància (Y)")]
-    public float stepY = 1.3f;       // Reducido para saltos más seguros (antes 1.5)
+    public float stepY = 2.2f;       // Aumentat per saltos més còmodes (abans 1.3)
     
     [Header("Configuració Horizontal (X)")]
     [Tooltip("El hueco MÍNIMO garantizado entre los bordes de las plataformas")]
-    public float huecoMinimo = 0.1f; // Bastante cerca para no forzar saltos imposibles
-    public float maxJumpX = 2.7f;    // Distancia máxima humana reducida (antes 3.5)
+    public float huecoMinimo = 0.5f; // Hueco mínim garantit per evitar que es toquin (abans 0.1)
+    public float maxJumpX = 4.5f;    // Distància màxima humana augmentada (abans 2.7)
     public float width = 14f;         
     
     [Header("Configuració de Mida")]
@@ -24,10 +24,25 @@ public class PlatformSpawner : MonoBehaviour
     
     private float lastSpawnY = -2f;
     private float lastSpawnX = 0f; 
-    private float lastPlatformWidth = 2.0f; // Guardamos el ancho de la última
-    public static List<GameObject> activePlatforms = new List<GameObject>(); // Público y estático para los bots
+    private float lastPlatformWidth = 2.0f;
+    public static List<GameObject> activePlatforms = new List<GameObject>();
 
-    private bool _initialized = false;
+    // IMPORTANT: do NOT use the Inspector 'player' field to track the live player.
+    // It is a prefab reference, not a scene instance. Always use PlayerMovement.LocalPlayer.
+    private Transform _trackedPlayer;
+
+    void Awake()
+    {
+        // Neteja la llista estàtica SEMPRE que el spawner es crea de nou (nova escena/sessió).
+        // Sense això, la 2a partida tindria referències mortes a plataformes destruïdes
+        // de la 1a partida i el spawner no generaria res.
+        foreach (var p in activePlatforms)
+        {
+            if (p != null) Destroy(p);
+        }
+        activePlatforms.Clear();
+        Debug.Log("<color=orange>SPAWNER:</color> Llista estàtica netejada a Awake.");
+    }
 
     void Start()
     {
@@ -46,36 +61,36 @@ public class PlatformSpawner : MonoBehaviour
             if (p != null) Destroy(p);
         }
         activePlatforms.Clear();
+        
+        // FORÇAR VALORS PER CODI (Ignora l'Inspector per seguretat)
+        stepY = 2.2f;
+        huecoMinimo = 0.5f;
+        maxJumpX = 4.5f;
 
         for (int i = 0; i < 6; i++) SpawnPlatform();
     }
 
     void Update()
     {
-        // 1. Sanetització de la llista estàtica (per si hi ha referències mortes de la partida 1)
+        // 1. Sanitize static list from dead references
         activePlatforms.RemoveAll(item => item == null);
 
-        // 2. Si el jugador local ha canviat (nova partida), forçem un reset
-        if (PlayerMovement.LocalPlayer != null && (player == null || player != PlayerMovement.LocalPlayer.transform))
+        // 2. Try to find the local player if not tracked yet
+        if (_trackedPlayer == null && PlayerMovement.LocalPlayer != null)
         {
-            player = PlayerMovement.LocalPlayer.transform;
-            ResetSpawner();
-            Debug.Log("<color=cyan>SPAWNER:</color> Nova partida detectada. Resetejant.");
+            _trackedPlayer = PlayerMovement.LocalPlayer.transform;
+            // Reset spawn position to just below the player so platforms generate around them
+            lastSpawnY = _trackedPlayer.position.y - 3f;
+            lastSpawnX = 0f;
+            // Spawn a fresh batch around the player's starting position
+            for (int i = 0; i < 6; i++) SpawnPlatform();
+            Debug.Log("<color=cyan>SPAWNER:</color> Jugador local trobat. Generant plataformes inicials.");
         }
 
-        if (player == null) return;
+        if (_trackedPlayer == null) return;
 
-        // 3. AUTO-REPARACIÓ: Si el jugador està molt per sobre de l'última plataforma 
-        // (perquè el reset de Start() ha fallat o lastSpawnY tenia dades brossa), 
-        // forçem que el spawner "salte" fins a la posició del jugador.
-        if (player.position.y > lastSpawnY + 20f)
-        {
-            Debug.LogWarning("[SPAWNER] El jugador està massa lluny de les plataformes! Forçant salt de generació.");
-            lastSpawnY = player.position.y - 5f;
-        }
-
-        // 4. Generació normal
-        if (player.position.y + 12f > lastSpawnY)
+        // 3. Generate upward as the player climbs
+        if (_trackedPlayer.position.y + 12f > lastSpawnY)
         {
             SpawnPlatform();
         }
@@ -129,21 +144,21 @@ public class PlatformSpawner : MonoBehaviour
 
     void CleanupPlatforms()
     {
-        if (activePlatforms.Count == 0) return;
+        if (activePlatforms.Count == 0 || _trackedPlayer == null) return;
 
         GameObject lowestPlatform = activePlatforms[0];
         
-        // Prevención de cuelgues si la lava ya se la ha comido
         if (lowestPlatform == null)
         {
             activePlatforms.RemoveAt(0);
             return;
         }
 
-        if (player != null && (player.position.y - lowestPlatform.transform.position.y) > 10f)
+        if ((_trackedPlayer.position.y - lowestPlatform.transform.position.y) > 10f)
         {
             activePlatforms.RemoveAt(0);
             Destroy(lowestPlatform);
+            Debug.Log("<color=gray>[SPAWNER]</color> Plataforma inferior destruida para ahorrar memoria.");
         }
     }
 }

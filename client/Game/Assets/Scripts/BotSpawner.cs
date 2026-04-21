@@ -8,15 +8,22 @@ public class BotSpawner : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        Debug.Log("<color=yellow>[BOTSPAWNER]</color> OnNetworkSpawn disparado.");
         // Solo el Host tiene derecho a instanciar los bots de forma segura
         if (IsServer)
         {
             int pendingBots = PlayerPrefs.GetInt("PendingBots", 0);
+            Debug.Log($"<color=yellow>[BOTSPAWNER]</color> Soy Server. PendingBots detectados: {pendingBots}");
             
             for (int i = 0; i < pendingBots; i++)
             {
+                Debug.Log($"<color=yellow>[BOTSPAWNER]</color> Intentando instanciar bot {i + 1} de {pendingBots}...");
                 SpawnBot();
             }
+        }
+        else
+        {
+            Debug.Log("<color=yellow>[BOTSPAWNER]</color> Soy Cliente. No puedo instanciar bots, espero a que el Server lo haga.");
         }
     }
 
@@ -24,19 +31,24 @@ public class BotSpawner : NetworkBehaviour
     {
         if (botPrefabs == null || botPrefabs.Length == 0) 
         {
-            Debug.LogWarning("BotSpawner: No has asignado prefabs de bots!");
+            Debug.LogError("<color=red>[BOTSPAWNER ERROR]</color> ¡No has asignado prefabs de bots en el Inspector (botPrefabs está vacío)!");
             return;
         }
 
-        // Elige una posición un poco aleatoria en el eje X para que no caigan apilados
-        Vector3 spawnPos = new Vector3(Random.Range(-4f, 4f), transform.position.y + 4f, 0f);
+        // Spawn safely above the floor so they drop into play, avoiding getting stuck inside the ground collider
+        float randomX = Random.Range(-2.5f, 2.5f);
+        Vector3 spawnPos = new Vector3(randomX, 0f, 0f);
         
         // Coge un personaje al azar del array
         GameObject prefab = botPrefabs[Random.Range(0, botPrefabs.Length)];
         
         GameObject botInstance = Instantiate(prefab, spawnPos, Quaternion.identity);
         
-        // SUPER IMPORTANTE: Si el prefab no tiene el cerebro de IA, se lo ponemos a la fuerza
+        // Crucial: Mark as Bot BEFORE Spawn so Netcode knows this is not a player-owned object
+        var pm = botInstance.GetComponent<PlayerMovement>();
+        if (pm != null) pm.isBot = true;
+
+        // Initialize BotAI (also sets isBot on movement)
         var botAI = botInstance.GetComponent<BotAI>();
         if (botAI == null) 
         {
@@ -44,15 +56,12 @@ public class BotSpawner : NetworkBehaviour
             Debug.Log($"<color=orange>BOTSPAWNER:</color> He afegit el cervell BotAI a {botInstance.name} perquè no ho tenia!");
         }
         botAI.enabled = true;
+        botAI.Initialize();
 
-        // Crucial: Marcar el componente de movimiento como Bot para que no lea el teclado!
-        var pm = botInstance.GetComponent<PlayerMovement>();
-        if (pm != null) pm.isBot = true;
-
-        // HUD flotante para el BOT
-        botInstance.AddComponent<BotWorldHUD>();
-
-        // Generar en la red para que todos los jugadores vean al bot
+        // Spawn in network (MUST be done before adding world-space UI components)
         botInstance.GetComponent<NetworkObject>().Spawn(true);
+
+        // HUD flotant per al BOT (added after Spawn, safe)
+        botInstance.AddComponent<BotWorldHUD>();
     }
 }

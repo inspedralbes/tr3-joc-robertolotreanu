@@ -6,6 +6,12 @@ public class CameraFollow : MonoBehaviour
     public float smoothSpeed = 0.125f;
     public Vector3 offset = new Vector3(0, 2, -10);
 
+    // Clear the tracked target when the scene ends so we don't hold a stale reference
+    void OnDisable()
+    {
+        target = null;
+    }
+
     void LateUpdate()
     {
         if (target == null) 
