@@ -1,54 +1,50 @@
-# Prompts Log de la Especificació: Panel d'Usuari al Lobby
+# Log de Prompts i Traçabilitat (Bot AI)
 
-*Aquest fitxer fa el seguiment i la traçabilitat de tota la interacció amb l'Agent d'IA.*
+**Objectiu:** Solucionar l'avaluació caòtica del Pathfinding de l'IA (Bots) i implementar de forma traçable el nou sistema de salt autònom basat en Spec-Driven Development.
 
-## 1. Generació de l'Especificació (OpenSpec)
+---
 
-**Timestamp:** 2026-04-16
-**Prompt per generar la especificació:**
-> "valebien, me gustaria tenerlo mas organizado lo de las salas, saber mi Alias, mis estadisticas (integrarlo con esto: Us d’IA amb desenvolupament guiat per especificació (OpenSpec) Es demana treballar una funcionalitat concreta de l’aplicació utilitzant una metodologia de Spec-Driven Development (SDD) amb suport d’Intel·ligència Artificial..."
+### [Iteració 1] Primer error detectat
+**Problema Detectat:** El client reporta que els bots *“saltaban como locos”* i es bugejaven sota les plataformes o a terra.
 
-**Acció d'IA i resultats:**
-L'IA (Antigravity) proposa establir la funcionalitat completa de "Panell de Perfil del Jugador: Àlies i Estadístiques" i crea automàticament l'estructura `/docs/OpenSpec` i aquest mateix log.
+**Causa (Debugging):** 
+Analitzant el codi de `BotAI.cs` i `PlayerMovement.cs`, el mètode `ForceBotJump()` anul·lava la validació física de la boleana `isGrounded`. Això provocava que els bots fessin "spam" del salt i s'elevaresin volant pel mig de l'escena o saltant constantment quan apropaven el seu centre X a una plataforma molt superior (fent "pogo-sticking").
 
-## 2. Pendent d'Implementació
-*(Aquí anirem afegint les ordres de com hem començat a generar el codi, iterat els errors...)*
+**Canvi / Fix Proposat:**
+Es va demanar aplicar directrius de limitació espacial, recollides al *plan.md*. Primer, protegir `ForceBotJump()`:
+```csharp
+    public void ForceBotJump()
+    {
+        if (isGrounded && Time.time >= lastJumpTime + jumpCooldown)
+        {
+            jumpRequested = true;
+            botJumpRequested = false;
+        }
+    }
+```
 
-## 2. Fase d'Implementació Inicial (Backend)
+---
 
-**Timestamp:** 2026-04-16
-**Prompt:**
-> "Executa la planificació del backend. Actualitza l'InMemoryUserRepository i el UserService per tenir estadístiques a 0 al registrar l'usuari, i exposa el GET /users/username/stats."
+### [Iteració 2] Detecció de variables nul·les
+**Problema Detectat:** A meitat de les proves es feia servir el comando de Raycast i Codi basat en Unity Edit "Tag". Això feia llençar una Excepció de Unity tipus "Tag 'Platform' does not exist" i aturava completament l'execució. Els bots quedaven vegetatius en terra.
 
-**Acció d'IA i resultats:**
-Antigravity executa canvis a `UserService.js` per dotar el model de persistència de camps estadístics. S'afegeix un mètode get, s'exposa al `UserController` i s'aixeca a la ruta paramètrica. Es lliura funcional de primer intent i es documenta en aquest fitxer.
+**Causa (Debugging):** 
+Unity requereix que tota "Tag" es crei a mà per un humà a la UI abans de ser cridada en codi font C#. El desenvolupador no ho tenia, i l'script s'enviava directament a Null Exception aturant l'Update de Generació (`PlatformSpawner.cs`).
 
-## 3. Fase d'Implementació Final (Frontend)
+**Canvi / Fix Proposat:**
+Sincronitzar per referències estàtiques a memòria deslligades de configuracions estètiques de l'editor de Unity com es demostra al *foundations*. Es creà `PlatformSpawner.activePlatforms` i aixo omplí `BotAI` de les meta-referencies reals i segures al mil·lisegon sense col·lapsar cap llibreria Base.
 
-**Timestamp:** 2026-04-16
-**Prompt:**
-> "He afegit els elements NameLabel i StatsLabel al MainMenuUI.uxml. Toca el MenuManager.cs perquè llegeixi les dades de l'endpoint des del UnityWebRequest en entrar al Lobby i me les mostri per pantalla. Actualitza també el document tracker."
+---
 
-**Acció d'IA i resultats:**
-S'aplica la lectura dels objectes *visual element* per part de la IA en C#. Es crea la corrutina `FetchUserStats` que utilitza un nou model DTO (`UserStatsData`) i un mètode GET d'`UnityWebRequest` que interpreta el JSON asíncronament mostrant un loader temporal i el formatatge *"Partides / Victòries / Baixes"*. Es lliga la corrutina a tots els fluxos on es carrega el lobby i es documenta en el *prompts-log*.
+### [Iteració 3] Comportament de Caça de Plataformes Sòlides
+**Problema Detectat:** Els bots saltaven una sola vegada però s'obrien el cap contra la llosa i queien directament avall perquè les plataformes són totalment sòlides inferiors i no deixaven que travessessin al saltar just sota elles.
 
-## 4. Reflexió i Iteració sobre la lògica d'Estadístiques
+**Causa (Debugging):**
+L'algoritme només perseguia els components X i buscava situar-lo a `distX = 0`, posant-lo directament al forat cec per sota la plataforma abans de processar el salt. Això impedia l'ascenció de nivells en "modo solo", resultant en un bucle mort que frustrava els intents i donava la pèrdua immediata de la "vida". 
 
-**Timestamp:** 2026-04-16
-**Prompt:**
-> "sale perfecto, pero mi juego como sabe que he ganado? al fin y al cabo es un mapa sin limite... no seria mejor registrar los mejores tiempos?"
+**Refinament SDD i Solució:** 
+Implementació d'un PUNT DE SALT fix seguit de directrius al spec.
+`float puntoSaltoX = (distX >= 0) ? 1.2f : -1.2f;`
+Si hi ha ombra, allunya't. Si arribes, salta agafant velocitat horitzontal `1f` simultàniament a l'impulsió Y.
 
-**Acció d'IA i resultats:**
-Davant d'aquesta deducció per part de l'usuari sobre la naturalesa contínua ("Survival") del joc associada a la mecànica de *LavaRise*, es reconsidera l'especificació. Antigravity adapta automàticament tant Node.js `UserService.js` (`stats: { gamesPlayed: 0, bestTime: 0 }`) com la part de Unity C# en `MenuManager.cs` per utilitzar i renderitzar floats de temps ("Millor Temps: XX.Xs"). Això completa una perfecta demostració d'adaptabilitat Agile en OpenSpec!
-
-# FEATURE 2: MODES DE JOC I SCOREBOARD GLOBAL
-
-**Timestamp:** 2026-04-17
-**Prompt:**
-> "vale, mi proxima idea es tener dos opciones, solitario o multijugador. si, que el SCOREBOARD SEA MUNDIAL, el mejor tiempo lo marque al usuario, da igual si lo ha hecho en multijugador o en solitario. 1 pantalla previa a crear sala"
-
-**Acció d'IA i resultats:**
-L'assistent tanca l'anterior mòdul i estructura l'OpenSpec d'aquesta nova mecànica a `docs/OpenSpec/feature2_modes.md`. Es proposa una alteració de flux on el Login porta a una nova capa de la UI (`ModeSelectionPanel`). Atès que el Scoreboard Mundial compartit és el nucli ideològic, el Backend de Node.js s'aprofita intacte gràcies al refactor previ de `bestTime`. Ens trobem a l'espera de la confirmació del pla (`opsx:apply`).
-
-**Implementació Tècnica (opsx:apply):**
-L'IA aïlla l'error previ de memòria del servidor de Node permetent el joc Solitari sense forçar el des-login. S'insereix al XML la nova Pantalla de Selecció de rutes i `MenuManager.cs` interromp el flux natiu modificant l'arrancada perquè executi `NetworkManager.Singleton.Shutdown()` prèviament a engegar `StartSoloMode()` per resoldre l'amenaça bloquejant de punts cecs ("Sockets binding") sobre els quals l'usuari havia emès logs vermells. Feature 2 implementada en C#!
+D'aquesta manera tota traça ha seguit el procediment OpenSpec a l'hora que l'IA va documentant i construïnt en un context totalment tancat i modular.

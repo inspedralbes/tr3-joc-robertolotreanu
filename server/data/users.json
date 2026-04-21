@@ -15,8 +15,8 @@
     "password": "$2b$10$.f8Hzsw7PAqUCfJ/YSOii.WrQipsSdNeH7eY4lfaNJmYi9.N8LeI.",
     "createdAt": "2026-04-20T08:12:05.842Z",
     "stats": {
-      "gamesPlayed": 15,
-      "bestTime": 30.14
+      "gamesPlayed": 132,
+      "bestTime": 53.99
     }
   },
   {
@@ -27,6 +27,76 @@
     "stats": {
       "gamesPlayed": 0,
       "bestTime": 0
+    }
+  },
+  {
+    "id": 1776686435546,
+    "username": "Roberto2",
+    "password": "$2b$10$Kxmk1ut9SiaXECNVKDrAfulpLx5wKs7Qw6QQEZMA1ExMozXSzRwbu",
+    "createdAt": "2026-04-20T12:00:35.546Z",
+    "stats": {
+      "gamesPlayed": 9,
+      "bestTime": 7.34
+    }
+  },
+  {
+    "id": 1776686917360,
+    "username": "2",
+    "password": "$2b$10$pzPyNWL9ZrvM/Fxa8vnWTeEBuvBHNL7maWGtqjkIVGCVvZkVjpg.C",
+    "createdAt": "2026-04-20T12:08:37.360Z",
+    "stats": {
+      "gamesPlayed": 3,
+      "bestTime": 6.49
+    }
+  },
+  {
+    "id": 1776687219167,
+    "username": "Roberto1",
+    "password": "$2b$10$VfTGnwlRRagCXCac9sjnOurO20i3WwZF7QpVtpdizKzEa0t90tevq",
+    "createdAt": "2026-04-20T12:13:39.167Z",
+    "stats": {
+      "gamesPlayed": 4,
+      "bestTime": 6.16
+    }
+  },
+  {
+    "id": 1776725568945,
+    "username": "Roberto3",
+    "password": "$2b$10$BxJixbBCwGCcKGdw2ebLK.2ETgc6XhgwlNxmm/5Pv0YBNUjXJLgWq",
+    "createdAt": "2026-04-20T22:52:48.945Z",
+    "stats": {
+      "gamesPlayed": 6,
+      "bestTime": 5.74
+    }
+  },
+  {
+    "id": 1776727606274,
+    "username": "Roberto5",
+    "password": "$2b$10$uXR1OTxqv9amgX5BVIoLSet8EEPmjA7b3Agi9jWI2w.n44ZPDzb.m",
+    "createdAt": "2026-04-20T23:26:46.274Z",
+    "stats": {
+      "gamesPlayed": 2,
+      "bestTime": 1.56
+    }
+  },
+  {
+    "id": 1776727757717,
+    "username": "3",
+    "password": "$2b$10$5yHjwEMKXKyQW0Sd/tWFbONzCIr/iIFoJoWqDT4tKULZ4Oore5Tsi",
+    "createdAt": "2026-04-20T23:29:17.717Z",
+    "stats": {
+      "gamesPlayed": 0,
+      "bestTime": 0
+    }
+  },
+  {
+    "id": 1776730983714,
+    "username": "Roberto4",
+    "password": "$2b$10$TL4JUn0S4vrRtfia823WGOUAETBoU8ClQThoIFgZ/N3/r5C8dZoDK",
+    "createdAt": "2026-04-21T00:23:03.714Z",
+    "stats": {
+      "gamesPlayed": 2,
+      "bestTime": 2.06
     }
   }
 ]
