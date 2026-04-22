@@ -50,4 +50,4 @@ Comandes essencials per gestionar el servidor en producció:
 
 ---
 
-[Enllaç al Vídeo Canva](LINK_AQUI)
+[Enllaç al Vídeo Canva](https://canva.link/wi3135leyxlfbl0)
