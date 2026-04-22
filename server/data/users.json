@@ -15,7 +15,7 @@
     "password": "$2b$10$.f8Hzsw7PAqUCfJ/YSOii.WrQipsSdNeH7eY4lfaNJmYi9.N8LeI.",
     "createdAt": "2026-04-20T08:12:05.842Z",
     "stats": {
-      "gamesPlayed": 161,
+      "gamesPlayed": 199,
       "bestTime": 54.02
     }
   },
@@ -35,8 +35,8 @@
     "password": "$2b$10$Kxmk1ut9SiaXECNVKDrAfulpLx5wKs7Qw6QQEZMA1ExMozXSzRwbu",
     "createdAt": "2026-04-20T12:00:35.546Z",
     "stats": {
-      "gamesPlayed": 10,
-      "bestTime": 7.34
+      "gamesPlayed": 30,
+      "bestTime": 79.84
     }
   },
   {
@@ -45,8 +45,8 @@
     "password": "$2b$10$pzPyNWL9ZrvM/Fxa8vnWTeEBuvBHNL7maWGtqjkIVGCVvZkVjpg.C",
     "createdAt": "2026-04-20T12:08:37.360Z",
     "stats": {
-      "gamesPlayed": 3,
-      "bestTime": 6.49
+      "gamesPlayed": 8,
+      "bestTime": 24.24
     }
   },
   {
@@ -65,7 +65,7 @@
     "password": "$2b$10$BxJixbBCwGCcKGdw2ebLK.2ETgc6XhgwlNxmm/5Pv0YBNUjXJLgWq",
     "createdAt": "2026-04-20T22:52:48.945Z",
     "stats": {
-      "gamesPlayed": 6,
+      "gamesPlayed": 10,
       "bestTime": 5.74
     }
   },
@@ -95,8 +95,8 @@
     "password": "$2b$10$TL4JUn0S4vrRtfia823WGOUAETBoU8ClQThoIFgZ/N3/r5C8dZoDK",
     "createdAt": "2026-04-21T00:23:03.714Z",
     "stats": {
-      "gamesPlayed": 2,
-      "bestTime": 2.06
+      "gamesPlayed": 5,
+      "bestTime": 28.83
     }
   },
   {
@@ -107,6 +107,26 @@
     "stats": {
       "gamesPlayed": 0,
       "bestTime": 0
+    }
+  },
+  {
+    "id": 1776807799227,
+    "username": "Rob",
+    "password": "$2b$10$JlVy0bmgffVV9NpYLa5sluozf0z2varFITkq0W3g6ds2X3suqA/lu",
+    "createdAt": "2026-04-21T21:43:19.227Z",
+    "stats": {
+      "gamesPlayed": 6,
+      "bestTime": 13.28
+    }
+  },
+  {
+    "id": 1776813453875,
+    "username": "1",
+    "password": "$2b$10$bF0u/moYw5ggFaQdMcESR.5B/945r3ISy8oaBSPj0iAegDFy9q1o.",
+    "createdAt": "2026-04-21T23:17:33.875Z",
+    "stats": {
+      "gamesPlayed": 9,
+      "bestTime": 9.04
     }
   }
 ]

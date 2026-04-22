@@ -1,0 +1,455 @@
+fileFormatVersion: 2
+guid: 633bd19bd6b37404c80af5d69332b27d
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7394156071263476602
+    second: samuri_animations-Recovered_0
+  - first:
+      213: -3512542077137276893
+    second: samuri_animations-Recovered_1
+  - first:
+      213: 1898713526898137554
+    second: samuri_animations-Recovered_2
+  - first:
+      213: 263363088611756622
+    second: samuri_animations-Recovered_3
+  - first:
+      213: 6448024792550060410
+    second: samuri_animations-Recovered_4
+  - first:
+      213: -7773276541986744932
+    second: samuri_animations-Recovered_5
+  - first:
+      213: 253728419890109177
+    second: samuri_animations-Recovered_6
+  - first:
+      213: -699957966862636914
+    second: samuri_animations-Recovered_7
+  - first:
+      213: -2503627719905143282
+    second: samuri_animations-Recovered_8
+  - first:
+      213: -8816381025316591255
+    second: samuri_animations-Recovered_9
+  - first:
+      213: 5524325954923977284
+    second: samuri_animations-Recovered_10
+  - first:
+      213: -6279813141960019701
+    second: samuri_animations-Recovered_11
+  - first:
+      213: -2442822486200764521
+    second: samuri_animations-Recovered_12
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_0
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 141
+        width: 27
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 684ea86aa3ea26990800000000000000
+      internalID: -7394156071263476602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_1
+      rect:
+        serializedVersion: 2
+        x: 177
+        y: 141
+        width: 27
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 320be915791f04fc0800000000000000
+      internalID: -3512542077137276893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_2
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 77
+        width: 27
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d91ef494e5995a10800000000000000
+      internalID: 1898713526898137554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_3
+      rect:
+        serializedVersion: 2
+        x: 180
+        y: 77
+        width: 31
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e4a47af6557a7a300800000000000000
+      internalID: 263363088611756622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_4
+      rect:
+        serializedVersion: 2
+        x: 308
+        y: 77
+        width: 31
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a71bbdeb26cfb7950800000000000000
+      internalID: 6448024792550060410
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_5
+      rect:
+        serializedVersion: 2
+        x: 436
+        y: 77
+        width: 34
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c95d00e6b26cf1490800000000000000
+      internalID: -7773276541986744932
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_6
+      rect:
+        serializedVersion: 2
+        x: 564
+        y: 77
+        width: 31
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fa98f057ac658300800000000000000
+      internalID: 253728419890109177
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_7
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 13
+        width: 27
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e88a27b00ff3946f0800000000000000
+      internalID: -699957966862636914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_8
+      rect:
+        serializedVersion: 2
+        x: 182
+        y: 13
+        width: 45
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e069b318ad3514dd0800000000000000
+      internalID: -2503627719905143282
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_9
+      rect:
+        serializedVersion: 2
+        x: 310
+        y: 13
+        width: 45
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 969a28d2b2ce5a580800000000000000
+      internalID: -8816381025316591255
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_10
+      rect:
+        serializedVersion: 2
+        x: 438
+        y: 13
+        width: 46
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44ad6b6df295aac40800000000000000
+      internalID: 5524325954923977284
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_11
+      rect:
+        serializedVersion: 2
+        x: 566
+        y: 13
+        width: 46
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b01b4a1283f99d8a0800000000000000
+      internalID: -6279813141960019701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: samuri_animations-Recovered_12
+      rect:
+        serializedVersion: 2
+        x: 694
+        y: 13
+        width: 44
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 797baa434e9591ed0800000000000000
+      internalID: -2442822486200764521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      samuri_animations-Recovered_0: -7394156071263476602
+      samuri_animations-Recovered_1: -3512542077137276893
+      samuri_animations-Recovered_10: 5524325954923977284
+      samuri_animations-Recovered_11: -6279813141960019701
+      samuri_animations-Recovered_12: -2442822486200764521
+      samuri_animations-Recovered_2: 1898713526898137554
+      samuri_animations-Recovered_3: 263363088611756622
+      samuri_animations-Recovered_4: 6448024792550060410
+      samuri_animations-Recovered_5: -7773276541986744932
+      samuri_animations-Recovered_6: 253728419890109177
+      samuri_animations-Recovered_7: -699957966862636914
+      samuri_animations-Recovered_8: -2503627719905143282
+      samuri_animations-Recovered_9: -8816381025316591255
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

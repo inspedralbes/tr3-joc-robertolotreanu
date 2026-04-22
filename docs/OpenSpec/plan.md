@@ -1,18 +1,15 @@
-## Estratègia d'Implementació
+# Implementation Plan: Multiplayer Stability
 
-**Actuació 0: Registre en Bitàcola**
-- Registrar la situació inicial de control trencat de la IA a `prompts-log.md` per traçabilitat del projecte.
+## Fase 1: Càmera i Spawn
+1. Modificar `CameraFollow.cs` per forçar la cerca del `LocalPlayer` en cada frame fins que es trobi.
+2. Actualitzar `PlayerSpawner.cs` per reduir el delay de spawn i implementar la cerca de la plataforma base per nom.
 
-**Actuació 1: Sincronització Fixa i Sensorial**
-- Fitxer objectiu: `BotAI.cs`.
-- Eliminar totalment `FindGameObjectsWithTag` ja que és perillós depenent de la configuració de l'entorn.
-- Substituir per pas net d'una llista de instàncies viva `PlatformSpawner.activePlatforms`.
+## Fase 2: Sincronització d'Identitat
+1. Afegir un diccionari persistent a `LobbySync.cs` per emmagatzemar la relació `clientId -> playerName`.
+2. Actualitzar `MenuManager.cs` per omplir aquest diccionari durant l'`ApprovalCheck`.
+3. Refactoritzar `PlayerMovement.cs` perquè el servidor assigni el nom des d'aquest diccionari al fer `OnNetworkSpawn`.
 
-**Actuació 2: Refactor del 'Update' Lògic i Cinemàtic**
-- Fitxer objectiu: `BotAI.cs`.
-- A l'avaluació de distàncies, separar per estats: "Sota Sostre", "A Punt de Salt", "Salt i Moviment Aeri".
-- Ús de variable auxiliar `puntoSaltoX` pre-calculada basat en la posició del jugador vs plataforma.
-
-**Actuació 3: Protecció Física**
-- Fitxer objectiu: `PlayerMovement.cs`.
-- Modificar mètode `ForceBotJump()` incrustant de forma fixa `isGrounded` per validar sempre legalitat física. Evitar l'escalament espacial sense plataformes de suport.
+## Fase 3: Visualització HUD
+1. Modificar `HUDController.cs` per eliminar el filtratge de jugadors morts a la llista superior.
+2. Afegir estils visuals (color vermell) per a l'estat "MORTO" al HUD.
+3. Actualitzar `LavaRise.cs` per usar la variable de xarxa `playerName` en les notificacions de mort.
