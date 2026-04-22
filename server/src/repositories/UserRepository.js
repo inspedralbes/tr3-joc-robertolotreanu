@@ -1,59 +1,18 @@
-const fs = require('fs');
-const path = require('path');
+// src/repositories/UserRepository.js
+const dotenv = require('dotenv');
+dotenv.config();
 
-class UserRepository {
-    constructor() {
-        this.dbPath = path.join(__dirname, '..', '..', 'data', 'users.json');
-        this.users = [];
-        this.initDb();
-    }
+// Selector de implementación del Repositorio (Estrategia de Persistencia)
+// Si existe MONGO_URI en el .env, usamos MongoDB. Si no, usamos el JSON local.
 
-    initDb() {
-        try {
-            // Check if data directory exists
-            const dirPath = path.dirname(this.dbPath);
-            if (!fs.existsSync(dirPath)) {
-                fs.mkdirSync(dirPath, { recursive: true });
-            }
-            if (fs.existsSync(this.dbPath)) {
-                const data = fs.readFileSync(this.dbPath, 'utf8');
-                this.users = JSON.parse(data);
-            } else {
-                this.saveDb();
-            }
-        } catch (error) {
-            console.error("No s'ha pogut inicialitzar la BD local", error);
-        }
-    }
+let repository;
 
-    saveDb() {
-        try {
-            fs.writeFileSync(this.dbPath, JSON.stringify(this.users, null, 2), 'utf8');
-        } catch (error) {
-            console.error("Error guardant a disc", error);
-        }
-    }
-
-    async save(user) {
-        this.users.push(user);
-        this.saveDb(); // Guardem immediatament al disc
-        return user;
-    }
-
-    async findByUsername(username) {
-        return this.users.find(u => u.username === username);
-    }
-
-    async update(user) {
-        const index = this.users.findIndex(u => u.username === user.username);
-        if (index !== -1) {
-            this.users[index] = user;
-            this.saveDb();
-            return user;
-        }
-        return null;
-    }
+if (process.env.MONGO_URI) {
+    console.log("📂 [Repository] Usant implementació de MONGODB (Producció)");
+    repository = require('./MongoUserRepository');
+} else {
+    console.log("📂 [Repository] Usant implementació JSON LOCAL (Desenvolupament)");
+    repository = require('./JsonUserRepository');
 }
 
-// Exportem una instància única (Singleton)
-module.exports = new UserRepository();
+module.exports = repository;

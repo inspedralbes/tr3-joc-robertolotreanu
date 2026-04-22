@@ -339,7 +339,7 @@ public class HUDController : MonoBehaviour
     private System.Collections.IEnumerator ActualizarStatsServidor()
     {
         string username = PlayerPrefs.GetString("PlayerName");
-        string serverURL = "http://localhost:3000/api";
+        string serverURL = "http://204.168.211.127:3000/api";
 
         var form = new UnityEngine.WWWForm();
         form.AddField("timeSurvived", tiempoTranscurrido.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
@@ -384,7 +384,7 @@ public class HUDController : MonoBehaviour
         Debug.Log($"[HUD] Sol·licitant eliminar sala del host: '{hostName}'");
 
         using var www = UnityWebRequest.Delete(
-            "http://localhost:3000/api/rooms/delete/" + UnityWebRequest.EscapeURL(hostName));
+            "http://204.168.211.127:3000/api/rooms/delete/" + UnityWebRequest.EscapeURL(hostName));
         yield return www.SendWebRequest();
 
         if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)

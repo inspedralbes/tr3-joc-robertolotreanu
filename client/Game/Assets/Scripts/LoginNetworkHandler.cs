@@ -3,7 +3,7 @@ using UnityEngine.Networking;
 using System.Collections;
 
 public class LoginNetworkHandler : MonoBehaviour {
-    private string url = "http://localhost:3000/api/register";
+    private string url = "http://204.168.211.127:3000/api/register";
     public IEnumerator LoginUsuario(string nombre, System.Action<bool> callback) {
         WWWForm form = new WWWForm();
         form.AddField("alias", nombre);

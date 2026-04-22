@@ -4,10 +4,18 @@ const { Server } = require('socket.io');
 const WebSocket  = require('ws');
 const dotenv     = require('dotenv');
 const cors       = require('cors');
+const mongoose   = require('mongoose');
 
 dotenv.config();
 const app    = express();
 const server = http.createServer(app);
+
+// ── Connexió a Base de Dades (MongoDB) ─────────────────────────────────────
+if (process.env.MONGO_URI) {
+    mongoose.connect(process.env.MONGO_URI)
+        .then(() => console.log('🍃 Connectat a MongoDB'))
+        .catch(err => console.error('❌ Error connectant a MongoDB:', err));
+}
 
 // ── Socket.io (per a altres integracions futures) ─────────────────────────
 const io = new Server(server, { path: '/socket.io' });

@@ -39,7 +39,7 @@ public class MenuManager : MonoBehaviour
  
     // --- Estat ---
     private int _selectedCharacterIndex = 0;
-    private string _serverURL = "http://localhost:3000/api";
+    private string _serverURL = "http://204.168.211.127:3000/api";
     private bool _isLobbyActive = false;
     private int _botCount = 0;
  

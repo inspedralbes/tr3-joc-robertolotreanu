@@ -1,10 +1,14 @@
-class User {
-    constructor(id, username, password, score = 0) {
-        this.id = id;
-        this.username = username;
-        this.password = password; // Recorda: en el futur anirà hashejada!
-        this.score = score;
-    }
-}
+// src/models/User.js
+const mongoose = require('mongoose');
 
-module.exports = User;
+const UserSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    stats: {
+        gamesPlayed: { type: Number, default: 0 },
+        bestTime: { type: Number, default: 0 }
+    },
+    createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('User', UserSchema);

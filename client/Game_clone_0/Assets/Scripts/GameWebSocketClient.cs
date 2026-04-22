@@ -14,7 +14,7 @@ using System.Collections.Concurrent;
 public class GameWebSocketClient : MonoBehaviour
 {
     [Header("Servidor WebSocket")]
-    [SerializeField] private string wsUrl = "ws://localhost:3000/gs";
+    [SerializeField] private string wsUrl = "ws://204.168.211.127:3000/gs";
 
     private ClientWebSocket    _ws;
     private Thread             _thread;
