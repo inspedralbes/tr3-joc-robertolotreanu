@@ -1,9 +1,6 @@
 # El último samurai en pie — Guia del Projecte
 **Curs:** 2DAM 2025-2026 | **Autor:** Roberto Lotreanu
 
-## 🌍 Servidor en Producció (VPS Alemanya)
-El sistema està desplegat de forma professional en un entorn Linux amb les següents característiques:
-
 - **Servidor:** Node.js (PM2) a `http://204.168.211.127:3000`
 - **Base de Dades Real:** **MongoDB 7.0** (Gestió d'usuaris i rànquings).
 - **Seguretat:** **Fail2Ban** (Protecció contra atacs de força bruta) + Nginx Proxy Invers.
@@ -41,5 +38,16 @@ node server.js
 
 ## 🏗️ Arquitectura
 El projecte segueix una arquitectura de **separació de responsabilitats** (Controller-Service-Repository), permetent que la lògica de negoci sigui independent de si les dades es guarden en un fitxer o en una base de dades NoSQL.
+
+## 🛠️ Gestió del Servidor (PM2)
+Comandes essencials per gestionar el servidor en producció:
+
+- **Veure estat:** `pm2 status`
+- **Veure logs en temps real:** `pm2 logs joc-server`
+- **Reiniciar servidor:** `pm2 restart joc-server`
+- **Aturar servidor:** `pm2 stop joc-server`
+- **Arrancar servidor:** `pm2 start joc-server`
+
+---
 
 [Enllaç al Vídeo Canva](LINK_AQUI)
