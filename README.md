@@ -1,58 +1,45 @@
 # El último samurai en pie — Guia del Projecte
 **Curs:** 2DAM 2025-2026 | **Autor:** Roberto Lotreanu
 
-## 🚀 Com arrancar-ho tot (Desenvolupament Local)
+## 🌍 Servidor en Producció (VPS Alemanya)
+El sistema està desplegat de forma professional en un entorn Linux amb les següents característiques:
 
-### 1. Servidor Node.js (sempre primer)
+- **Servidor:** Node.js (PM2) a `http://204.168.211.127:3000`
+- **Base de Dades Real:** **MongoDB 7.0** (Gestió d'usuaris i rànquings).
+- **Seguretat:** **Fail2Ban** (Protecció contra atacs de força bruta) + Nginx Proxy Invers.
+- **Sincronització:** WebSockets natius (`ws`) i Unity Netcode (NGO).
+
+---
+
+## 🏗️ Com arrancar-ho en local (Desenvolupament)
+
+### 1. Servidor Node.js
 ```powershell
 # Obre un terminal a:
-cd C:\Users\rober\Desktop\2nDAM\3r\joc\server\src
+cd server/src
 node server.js
 ```
-🚀 Servidor a `http://localhost:3000` | WS natius: `ws://localhost:3000/gs`
+*En local, el servidor utilitzarà automàticament `data/users.json` per facilitar el desenvolupament sense instal·lar MongoDB.*
 
-### 2. Unity (client del joc)
-1. Obre `c:\Users\rober\Desktop\2nDAM\3r\joc\client\Game` a Unity Hub.
-2. Obre l'escena `Lobby` (Assets → Scenes).
-3. Prem ▶ **Play**.
-
-### 3. ParrelSync (segon jugador per provar)
-1. Window → ParrelSync → Open Clone Project.
-2. El clon **automàticament esborra** `PlayerName` de PlayerPrefs (és un jugador diferent).
-3. Entra al clon, posa un nom diferent (ex: "Roberto2") i inicia sessió.
+### 2. Unity
+1. Obre el projecte a Unity Hub.
+2. Obre l'escena `Lobby` i prem ▶ **Play**.
 
 ---
 
-## 🌍 Servidor en Producció (VPS)
-El servidor està desplegat i protegit en un VPS a la IP: `204.168.211.127`.
-
-- **API URL:** `http://204.168.211.127:3000/api`
-- **WS URL:** `ws://204.168.211.127:3000/gs`
-- **Seguretat:** Fail2Ban actiu (8 IPs baneades actualment).
-- **Robustesa:** Gestionat amb PM2.
-
----
-
-## 🏗️ Arquitectura del sistema
-```
-┌─────────────────┐     HTTP REST      ┌──────────────────────────┐
-│   Unity Client  │ ────────────────→  │  Node.js (port 3000)     │
-│  (MenuManager)  │ ←────────────────  │  Express API             │
-│                 │                    │  ├─ /api/users            │
-│  NGO (game)     │ ←── UDP :7777 ──→  │  ├─ /api/rooms           │
-│  host ↔ client  │  (Unity Transport) │  └─ /api/users/:id/stats │
-│                 │                    │                          │
-│  WebSocketClient│ ──── WS /gs ────→  │  WebSocket natiu (/gs)   │
-└─────────────────┘                    └──────────────────────────┘
-```
+## ✅ Requisits Tècnics — Estat Final
+| Requisit | Implementació |
+|---|---|
+| **Base de Dades Real** | ✅ **MongoDB** actiu al VPS |
+| **Patró Repository** | ✅ Implementació Dual (JSON / Mongo) |
+| **Proxy Invers** | ✅ Nginx configurat |
+| **Seguretat** | ✅ Fail2Ban instal·lat i configurat |
+| **IA (ML-Agents)** | ✅ Bots amb IA integrats |
+| **Multijugador** | ✅ Sincronització NGO (UDP) + WS |
 
 ---
 
-## ✅ Requisits Tècnics Implementats
-- **Multijugador**: Sincronització via NGO i WebSockets per a esdeveniments.
-- **Patró Repository**: Persistència de dades d'usuaris i partides (InMemory + MongoDB).
-- **Seguretat**: Xifrat de contrasenyes amb bcrypt.
-- **IA**: Bots controlats per `BotAI.cs`.
-- **Proxy Invers**: Nginx configurat al port 80.
+## 🏗️ Arquitectura
+El projecte segueix una arquitectura de **separació de responsabilitats** (Controller-Service-Repository), permetent que la lògica de negoci sigui independent de si les dades es guarden en un fitxer o en una base de dades NoSQL.
 
 [Enllaç al Vídeo Canva](LINK_AQUI)
