@@ -6,4 +6,4 @@
 - **Backend:** Node.js (Express) + WebSockets natius per esdeveniments.
 - **Persistència:** Patró Repository dual (MongoDB en producció / JSON local).
 - **Infraestructura:** VPS amb Nginx (Proxy), Fail2Ban (Seguretat) i PM2.
-[Vídeo Canva](LINK_AQUI)
+[Vídeo Canva](https://canva.link/wi3135leyxlfbl0)
