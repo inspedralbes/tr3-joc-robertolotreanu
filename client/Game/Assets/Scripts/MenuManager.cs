@@ -44,6 +44,8 @@ public class MenuManager : MonoBehaviour
     private int _botCount = 0;
  
     private string _sessionName = string.Empty;
+    private bool _isConnecting = false;
+    private Coroutine _connectionTimeoutCoroutine;
  
     // ── Helpers de sessió (sempre llegeix/escriu PlayerPrefs, mai static) ──────
     private static string SessionName
@@ -636,26 +638,50 @@ public class MenuManager : MonoBehaviour
  
         NetworkManager.Singleton.NetworkConfig.ConnectionData = payload;
         NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
- 
+
+        _isConnecting = true;
+        if (_connectionTimeoutCoroutine != null) StopCoroutine(_connectionTimeoutCoroutine);
+        _isConnecting = true;
+
+        if (_statsLabel != null) _statsLabel.text = "Connectant a la sala...";
+
         bool success = NetworkManager.Singleton.StartClient();
         if (!success) {
+            _isConnecting = false;
+            if (_statsLabel != null) _statsLabel.text = "Error al iniciar el client.";
             ShowMiddlePanel(_lobbyPanel);
             yield break;
         }
- 
+
         LobbySync.Instance?.RegistrarReceptor();
-        AddPlayer(playerName);
- 
+        
+        // No cridem a AddPlayer aquí, esperem a OnClientConnected per confirmar la unió
+        
         var btnAddBot = _root.Q<Button>("AddBotButton");
         if (btnAddBot != null) btnAddBot.style.display = DisplayStyle.None;
- 
+
         var btnStart = _root.Q<Button>("StartGameButton");
         if (btnStart != null) btnStart.style.display = DisplayStyle.None;
- 
-        ShowMiddlePanel(_waitingRoomPanel);
+
+        // Mostrar nom de la sala però NO canviar de panell encara
         if (_waitingRoomPanel != null) {
             var label = _waitingRoomPanel.Q<Label>("RoomNameLabel");
             if (label != null) label.text = selectedRoom.name.ToUpper();
+        }
+
+        _connectionTimeoutCoroutine = StartCoroutine(ConnectionTimeout(10f));
+    }
+
+    private IEnumerator ConnectionTimeout(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        if (_isConnecting)
+        {
+            Debug.LogWarning("[MenuManager] Temps d'espera de connexió esgotat.");
+            _isConnecting = false;
+            if (NetworkManager.Singleton != null) NetworkManager.Singleton.Shutdown();
+            if (_statsLabel != null) _statsLabel.text = "Error: Temps d'espera esgotat.";
+            ShowMiddlePanel(_lobbyPanel);
         }
     }
  
@@ -663,14 +689,44 @@ public class MenuManager : MonoBehaviour
  
     void OnClientConnected(ulong clientId)
     {
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
+        if (NetworkManager.Singleton == null) return;
+
+        // Si sóc el client que s'està connectant i la connexió ha tingut èxit
+        if (!NetworkManager.Singleton.IsServer && clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            if (_isConnecting)
+            {
+                _isConnecting = false;
+                if (_connectionTimeoutCoroutine != null) StopCoroutine(_connectionTimeoutCoroutine);
+                
+                string playerName = PlayerPrefs.GetString("PlayerName", "Jugador");
+                AddPlayer(playerName);
+                ShowMiddlePanel(_waitingRoomPanel);
+                if (_statsLabel != null) _statsLabel.text = "Connectat!";
+            }
+            return;
+        }
+
+        if (!NetworkManager.Singleton.IsServer) return;
         if (clientId == NetworkManager.Singleton.LocalClientId) return;
+        
         // El spawn el fa PlayerSpawner quan carrega l'escena Game
         EmitirListaCompleta();
     }
  
     void OnClientDisconnected(ulong clientId)
     {
+        if (NetworkManager.Singleton != null && !NetworkManager.Singleton.IsServer && clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            if (_isConnecting)
+            {
+                _isConnecting = false;
+                if (_connectionTimeoutCoroutine != null) StopCoroutine(_connectionTimeoutCoroutine);
+                if (_statsLabel != null) _statsLabel.text = "Error al connectar.";
+                ShowMiddlePanel(_lobbyPanel);
+            }
+        }
+
         if (_connectedNames.TryGetValue(clientId, out string nombre))
         {
             _connectedNames.Remove(clientId);
@@ -685,7 +741,7 @@ public class MenuManager : MonoBehaviour
             if (_playerList != null) _playerList.Rebuild();
         }
  
-        if (!NetworkManager.Singleton.IsConnectedClient && !NetworkManager.Singleton.IsServer)
+        if (NetworkManager.Singleton != null && !NetworkManager.Singleton.IsConnectedClient && !NetworkManager.Singleton.IsServer)
         {
             _displayPlayers.Clear();
             _connectedNames.Clear();

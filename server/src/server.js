@@ -69,7 +69,7 @@ app.use('/api/users', userRoutes);
 
 app.post('/api/rooms/create', (req, res) => {
     const { roomName, hostName, maxPlayers, port } = req.body;
-    let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    let ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket.remoteAddress;
     if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
     if (ip && ip.startsWith('::ffff:')) ip = ip.substring(7);
 
