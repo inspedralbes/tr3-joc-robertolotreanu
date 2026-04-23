@@ -539,7 +539,7 @@ public class MenuManager : MonoBehaviour
  
         for (int i = 0; i < 10; i++) {
             portToTry = (ushort)(HOST_PORT + i);
-            if (transport != null) transport.SetConnectionData(HOST_ADDRESS, portToTry);
+            if (transport != null) transport.SetConnectionData("0.0.0.0", portToTry);
  
             NetworkManager.Singleton.NetworkConfig.ConnectionData = payload;
             NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
@@ -623,8 +623,9 @@ public class MenuManager : MonoBehaviour
         }
  
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        string roomIp = !string.IsNullOrEmpty(selectedRoom.ip) ? selectedRoom.ip : HOST_ADDRESS;
         if (transport != null)
-            transport.SetConnectionData(HOST_ADDRESS, roomPort);
+            transport.SetConnectionData(roomIp, roomPort);
  
         // Llegim el nom SEMPRE de PlayerPrefs
         string playerName = PlayerPrefs.GetString("PlayerName", "Jugador");
@@ -802,7 +803,7 @@ public class MenuManager : MonoBehaviour
  
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
         if (transport != null)
-            transport.SetConnectionData(HOST_ADDRESS, (ushort)0);
+            transport.SetConnectionData("0.0.0.0", (ushort)0);
  
         if (NetworkManager.Singleton != null) {
             // Llegim el nom SEMPRE de PlayerPrefs
@@ -883,7 +884,7 @@ public class MenuManager : MonoBehaviour
     }
 }
  
-[System.Serializable] public class RoomData { public string name; public string host; public int players; public int max; public int port; }
+[System.Serializable] public class RoomData { public string name; public string host; public int players; public int max; public int port; public string ip; }
 [System.Serializable] public class RoomListWrapper { public RoomData[] items; }
  
 [System.Serializable]

@@ -69,15 +69,20 @@ app.use('/api/users', userRoutes);
 
 app.post('/api/rooms/create', (req, res) => {
     const { roomName, hostName, maxPlayers, port } = req.body;
+    let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
+    if (ip && ip.startsWith('::ffff:')) ip = ip.substring(7);
+
     const newRoom = {
         id: Date.now().toString(),
         name: roomName, host: hostName,
         players: 1, playersList: [hostName],
         max: parseInt(maxPlayers) || 4,
-        port: parseInt(port) || 7777
+        port: parseInt(port) || 7777,
+        ip: ip
     };
     activeRooms.push(newRoom);
-    console.log('Sala creada:', newRoom);
+    console.log(`Sala creada: ${newRoom.name} a la IP ${newRoom.ip}:${newRoom.port}`);
     res.status(201).send(newRoom);
 });
 
