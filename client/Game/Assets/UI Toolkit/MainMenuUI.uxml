@@ -247,6 +247,7 @@
                 ">
                     <ui:VisualElement style="padding: 0 30px 15px 30px; border-bottom-width: 1px; border-bottom-color: rgba(255, 215, 0, 0.1); margin-bottom: 5px;">
                         <ui:Label name="RoomNameLabel" text="SALA" style="font-size: 20px; color: rgb(255, 215, 0); -unity-font-style: bold; -unity-text-align: middle-center;"/>
+                        <ui:Label name="JoinCodeLabel" text="CODI: ------" style="font-size: 14px; color: rgb(255, 215, 0); -unity-font-style: bold; -unity-text-align: middle-center; margin-top: 4px;"/>
                         <ui:Label text="GUERRERS DINS EL DOJO" style="font-size: 10px; color: rgba(255, 255, 255, 0.5); -unity-font-style: bold; -unity-text-align: middle-center; letter-spacing: 2px; margin-top: 4px;"/>
                     </ui:VisualElement>
 
@@ -290,6 +291,7 @@
             background-color: rgba(10, 8, 5, 0.9); border-top-width: 1px; border-top-color: rgba(255, 215, 0, 0.2);
         ">
             <ui:Button name="ShowCreatePanelButton" text="CREAR SALA" style="height: 44px; min-width: 150px; margin-right: 16px; background-color: rgba(42, 122, 79, 0.15); color: rgb(100, 255, 140); border-width: 1px; border-color: rgba(80, 200, 100, 0.4); border-radius: 6px; -unity-font-style: bold;"/>
+            <ui:TextField name="ManualJoinCodeInput" value="" style="width: 100px; height: 44px; margin-right: 12px; background-color: rgb(30, 20, 10); border-radius: 6px; border-width: 1px; border-color: rgb(160, 110, 50); font-size: 14px; color: white; -unity-text-align: middle-center;"/>
             <ui:Button name="JoinButton" text="UNIR-SE A DOJO" style="height: 44px; min-width: 150px; margin-right: 16px; background-color: rgba(255, 215, 0, 0.05); color: rgb(255, 215, 0); border-width: 1px; border-color: rgba(255, 215, 0, 0.3); border-radius: 6px; -unity-font-style: bold;"/>
             <ui:Button name="LoginButtonBottom" text="INICIAR SESSIÓ" style="height: 44px; min-width: 150px; background-color: rgb(200, 150, 20); color: rgb(20, 12, 0); border-width: 0; border-radius: 6px; -unity-font-style: bold;"/>
             <ui:Button name="LogoutButton" text="TANCAR SESSIÓ" style="display: none; height: 44px; min-width: 150px; background-color: rgb(160, 50, 50); color: white; border-width: 0; border-radius: 6px; -unity-font-style: bold;"/>

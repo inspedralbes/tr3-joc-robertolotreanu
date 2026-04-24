@@ -2,9 +2,15 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Networking;
 using Unity.Netcode;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode.Transports.UTP;
+using Unity.Services.Core;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
+using Unity.Services.Authentication;
+using System.Threading.Tasks;
  
 public class MenuManager : MonoBehaviour
 {
@@ -14,9 +20,7 @@ public class MenuManager : MonoBehaviour
     // --- Panells ---
     private VisualElement _root;
     private VisualElement _loginPanel, _modeSelectionPanel, _lobbyPanel, _waitingRoomPanel, _createRoomPopup;
- 
-    // --- Camps de text ---
-    private TextField _usernameInput, _newRoomName;
+    private TextField _usernameInput, _newRoomName, _manualJoinCodeInput;
  
     // --- Etiquetes de Perfil ---
     private Label _nameLabel, _statsLabel, _loginStatusLabel;
@@ -44,6 +48,10 @@ public class MenuManager : MonoBehaviour
     private int _botCount = 0;
  
     private string _sessionName = string.Empty;
+    private string _currentRoomId {
+        get => PlayerPrefs.GetString("CurrentRoomId", "");
+        set { PlayerPrefs.SetString("CurrentRoomId", value); PlayerPrefs.Save(); }
+    }
     private bool _isConnecting = false;
     private Coroutine _connectionTimeoutCoroutine;
  
@@ -98,6 +106,7 @@ public class MenuManager : MonoBehaviour
  
         _usernameInput = root.Q<TextField>("UsernameInput");
         _newRoomName   = root.Q<TextField>("NewRoomName");
+        _manualJoinCodeInput = root.Q<TextField>("ManualJoinCodeInput");
  
         _nameLabel        = root.Q<Label>("NameLabel");
         _statsLabel       = root.Q<Label>("StatsLabel");
@@ -305,12 +314,37 @@ public class MenuManager : MonoBehaviour
  
         if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.None;
  
+        StartCoroutine(InitializeUnityServices());
+ 
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager != null) {
             NetworkManager.Singleton.SceneManager.OnLoadComplete -= OnSceneLoaded;
             NetworkManager.Singleton.SceneManager.OnLoadComplete += OnSceneLoaded;
         }
     }
  
+    private IEnumerator InitializeUnityServices()
+    {
+        var task = UnityServices.InitializeAsync();
+        yield return new WaitUntil(() => task.IsCompleted);
+        if (task.IsFaulted)
+        {
+            Debug.LogError($"[Relay] Error inicialitzant Unity Services: {task.Exception}");
+        }
+        else
+        {
+            Debug.Log("[Relay] Unity Services inicialitzats correctament.");
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                var signTask = AuthenticationService.Instance.SignInAnonymouslyAsync();
+                yield return new WaitUntil(() => signTask.IsCompleted);
+                if (signTask.IsFaulted)
+                    Debug.LogError($"[Relay] Error al fer sign-in anònim: {signTask.Exception}");
+                else
+                    Debug.Log($"[Relay] Jugador autenticat! PlayerID: {AuthenticationService.Instance.PlayerId}");
+            }
+        }
+    }
+
     private void OnSceneLoaded(ulong clientId, string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode)
     {
         if (sceneName == "Game" && NetworkManager.Singleton != null && clientId == NetworkManager.Singleton.LocalClientId)
@@ -520,86 +554,109 @@ public class MenuManager : MonoBehaviour
             Debug.LogWarning("[CreateRoom] El nom de sala és buit.");
             yield break;
         }
- 
-        // Llegim el nom SEMPRE de PlayerPrefs
+
+        if (UnityServices.State != ServicesInitializationState.Initialized)
+        {
+            Debug.LogError("[Relay] Unity Services no inicialitzats encara.");
+            yield break;
+        }
+
         string playerName = PlayerPrefs.GetString("PlayerName", "Jugador");
         byte[] nameBytes = System.Text.Encoding.UTF8.GetBytes(playerName);
         byte[] payload = new byte[4 + nameBytes.Length];
         System.BitConverter.GetBytes(_selectedCharacterIndex).CopyTo(payload, 0);
         nameBytes.CopyTo(payload, 4);
- 
+
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening) {
             NetworkManager.Singleton.Shutdown();
             float t = Time.time + 3f;
             while (NetworkManager.Singleton.ShutdownInProgress && Time.time < t) yield return null;
         }
-        yield return new WaitForSecondsRealtime(1.2f);
- 
-        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        ushort portToTry = HOST_PORT;
-        bool portFound = false;
- 
-        for (int i = 0; i < 10; i++) {
-            portToTry = (ushort)(HOST_PORT + i);
-            if (transport != null) transport.SetConnectionData("0.0.0.0", portToTry);
- 
-            NetworkManager.Singleton.NetworkConfig.ConnectionData = payload;
-            NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
-            NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
- 
-            Debug.Log($"[CreateRoom] Intentant port {portToTry}...");
-            if (NetworkManager.Singleton.StartHost()) {
-                portFound = true;
-                Debug.Log($"<color=lime>[CreateRoom] Host creat al port {portToTry}!</color>");
-                break;
-            }
-            Debug.LogWarning($"[CreateRoom] Port {portToTry} ocupat. Esperant...");
-            NetworkManager.Singleton.Shutdown();
-            yield return new WaitForSecondsRealtime(1.0f);
-        }
- 
-        if (!portFound) {
-            Debug.LogError("[ERROR] No s'ha pogut obrir cap port (7777-7786). Reinicia Unity.");
-            ShowMiddlePanel(_lobbyPanel);
+        yield return new WaitForSecondsRealtime(1.0f);
+
+        // ── Creació d'Al·locació Relay ──
+        var relayTask = RelayService.Instance.CreateAllocationAsync(4);
+        yield return new WaitUntil(() => relayTask.IsCompleted);
+
+        if (relayTask.IsFaulted) {
+            Debug.LogError($"[Relay] Error al crear al·locació: {relayTask.Exception}");
             yield break;
         }
- 
+
+        var allocation = relayTask.Result;
+        var joinCodeTask = RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+        yield return new WaitUntil(() => joinCodeTask.IsCompleted);
+
+        if (joinCodeTask.IsFaulted) {
+            Debug.LogError($"[Relay] Error al demanar Join Code: {joinCodeTask.Exception}");
+            yield break;
+        }
+
+        string joinCode = joinCodeTask.Result;
+        Debug.Log($"[Relay] Host creat! Join Code: {joinCode}");
+
+        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        transport.SetRelayServerData(new Unity.Networking.Transport.Relay.RelayServerData(allocation, "dtls"));
+
+        NetworkManager.Singleton.NetworkConfig.ConnectionData = payload;
+        NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
+        NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
+
+        if (!NetworkManager.Singleton.StartHost()) {
+            Debug.LogError("[ERROR] No s'ha pogut iniciar el Host amb Relay.");
+            yield break;
+        }
+
+        _currentRoomId = System.Guid.NewGuid().ToString();
+        
         WWWForm form = new WWWForm();
         form.AddField("roomName", _newRoomName.value);
         form.AddField("hostName", _sessionName);
         form.AddField("maxPlayers", "4");
-        form.AddField("port", portToTry.ToString());
- 
+        form.AddField("relayCode", joinCode);
+        form.AddField("id", _currentRoomId);
+
         using (var www = UnityWebRequest.Post(_serverURL + "/rooms/create", form)) {
             yield return www.SendWebRequest();
-            if (www.result != UnityWebRequest.Result.Success)
-                Debug.LogWarning("[CreateRoom] Servidor no disponible, continuem igualment: " + www.error);
+            if (www.result == UnityWebRequest.Result.Success) {
+                var createdRoom = JsonUtility.FromJson<RoomData>(www.downloadHandler.text);
+                _currentRoomId = createdRoom.id;
+            } else {
+                Debug.LogWarning("[CreateRoom] Servidor no disponible: " + www.error);
+            }
         }
- 
+
         if (_createRoomPopup != null) _createRoomPopup.style.display = DisplayStyle.None;
- 
+
         LobbySync.Instance?.RegistrarReceptor();
- 
+
         _connectedNames[NetworkManager.Singleton.LocalClientId] = playerName;
         AddPlayer(playerName + " (host)");
- 
+
         if (_waitingRoomPanel != null) {
-            var label = _waitingRoomPanel.Q<Label>("RoomNameLabel");
-            if (label != null) label.text = _newRoomName.value.ToUpper();
+            var labelName = _waitingRoomPanel.Q<Label>("RoomNameLabel");
+            if (labelName != null) labelName.text = _newRoomName.value.ToUpper();
+            
+            var labelCode = _waitingRoomPanel.Q<Label>("JoinCodeLabel");
+            if (labelCode != null) {
+                labelCode.text = "CODI: " + joinCode;
+                labelCode.style.display = DisplayStyle.Flex;
+            }
         }
- 
+
         ShowMiddlePanel(_waitingRoomPanel);
- 
+
         var btnAddBot = _root?.Q<Button>("AddBotButton");
         if (btnAddBot != null) btnAddBot.style.display = DisplayStyle.Flex;
     }
  
     IEnumerator DeleteMyRoom()
     {
-        string hostName = _sessionName;
-        using (var www = UnityWebRequest.Delete(_serverURL + "/rooms/delete/" + hostName)) {
+        if (string.IsNullOrEmpty(_currentRoomId)) yield break;
+        using (var www = UnityWebRequest.Delete(_serverURL + "/rooms/delete/" + _currentRoomId)) {
             yield return www.SendWebRequest();
         }
+        _currentRoomId = string.Empty;
     }
  
     private IEnumerator TryJoinRoom()
@@ -607,13 +664,32 @@ public class MenuManager : MonoBehaviour
         _connectedNames.Clear();
         _displayPlayers.Clear();
         _botCount = 0;
- 
-        if (_roomList == null || _roomList.selectedIndex < 0 || _roomList.selectedIndex >= _roomDataList.Count)
+
+        string joinCode = string.Empty;
+        string roomNameDisp = "SALA";
+
+        // 1. Prioritat al codi manual si n'hi ha un
+        if (_manualJoinCodeInput != null && !string.IsNullOrEmpty(_manualJoinCodeInput.value)) {
+            joinCode = _manualJoinCodeInput.value.Trim().ToUpper();
+            roomNameDisp = "SALA PRIVADA";
+            _currentRoomId = "manual_" + joinCode; // ID temporal
+        }
+        else {
+            if (_roomList == null || _roomList.selectedIndex < 0 || _roomList.selectedIndex >= _roomDataList.Count) {
+                Debug.LogWarning("[JoinRoom] Selecciona una sala o escriu un codi.");
+                yield break;
+            }
+            RoomData selectedRoom = _roomDataList[_roomList.selectedIndex];
+            _currentRoomId = selectedRoom.id;
+            joinCode = selectedRoom.relayCode;
+            roomNameDisp = selectedRoom.name.ToUpper();
+        }
+
+        if (string.IsNullOrEmpty(joinCode)) {
+            Debug.LogError("[JoinRoom] No s'ha trobat cap codi d'unió.");
             yield break;
- 
-        RoomData selectedRoom = _roomDataList[_roomList.selectedIndex];
-        ushort roomPort = (selectedRoom.port > 0) ? (ushort)selectedRoom.port : HOST_PORT;
- 
+        }
+
         if (NetworkManager.Singleton != null && (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsClient)) {
             NetworkManager.Singleton.Shutdown();
             float timeout = 2.0f;
@@ -623,19 +699,27 @@ public class MenuManager : MonoBehaviour
             }
             yield return new WaitForSeconds(0.8f);
         }
- 
+
+        // ── Unir-se a Al·locació Relay ──
+        var joinTask = RelayService.Instance.JoinAllocationAsync(joinCode);
+        yield return new WaitUntil(() => joinTask.IsCompleted);
+
+        if (joinTask.IsFaulted) {
+            Debug.LogError($"[Relay] Error al unir-se a al·locació: {joinTask.Exception}");
+            yield break;
+        }
+
+        var allocation = joinTask.Result;
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        string roomIp = !string.IsNullOrEmpty(selectedRoom.ip) ? selectedRoom.ip : HOST_ADDRESS;
-        if (transport != null)
-            transport.SetConnectionData(roomIp, roomPort);
- 
+        transport.SetRelayServerData(new Unity.Networking.Transport.Relay.RelayServerData(allocation, "dtls"));
+
         // Llegim el nom SEMPRE de PlayerPrefs
         string playerName = PlayerPrefs.GetString("PlayerName", "Jugador");
         byte[] nameBytes = System.Text.Encoding.UTF8.GetBytes(playerName);
         byte[] payload = new byte[4 + nameBytes.Length];
         System.BitConverter.GetBytes(_selectedCharacterIndex).CopyTo(payload, 0);
         nameBytes.CopyTo(payload, 4);
- 
+
         NetworkManager.Singleton.NetworkConfig.ConnectionData = payload;
         NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
 
@@ -643,10 +727,9 @@ public class MenuManager : MonoBehaviour
         if (_connectionTimeoutCoroutine != null) StopCoroutine(_connectionTimeoutCoroutine);
         _isConnecting = true;
 
-        if (_statsLabel != null) _statsLabel.text = "Connectant a la sala...";
+        if (_statsLabel != null) _statsLabel.text = "Connectant via Relay...";
 
-        bool success = NetworkManager.Singleton.StartClient();
-        if (!success) {
+        if (!NetworkManager.Singleton.StartClient()) {
             _isConnecting = false;
             if (_statsLabel != null) _statsLabel.text = "Error al iniciar el client.";
             ShowMiddlePanel(_lobbyPanel);
@@ -655,18 +738,21 @@ public class MenuManager : MonoBehaviour
 
         LobbySync.Instance?.RegistrarReceptor();
         
-        // No cridem a AddPlayer aquí, esperem a OnClientConnected per confirmar la unió
-        
         var btnAddBot = _root.Q<Button>("AddBotButton");
         if (btnAddBot != null) btnAddBot.style.display = DisplayStyle.None;
 
         var btnStart = _root.Q<Button>("StartGameButton");
         if (btnStart != null) btnStart.style.display = DisplayStyle.None;
 
-        // Mostrar nom de la sala però NO canviar de panell encara
         if (_waitingRoomPanel != null) {
-            var label = _waitingRoomPanel.Q<Label>("RoomNameLabel");
-            if (label != null) label.text = selectedRoom.name.ToUpper();
+            var labelName = _waitingRoomPanel.Q<Label>("RoomNameLabel");
+            if (labelName != null) labelName.text = roomNameDisp;
+
+            var labelCode = _waitingRoomPanel.Q<Label>("JoinCodeLabel");
+            if (labelCode != null) {
+                labelCode.text = "CODI: " + joinCode;
+                labelCode.style.display = DisplayStyle.Flex;
+            }
         }
 
         _connectionTimeoutCoroutine = StartCoroutine(ConnectionTimeout(10f));
@@ -896,6 +982,9 @@ public class MenuManager : MonoBehaviour
         if (_waitingRoomPanel != null) {
             var label = _waitingRoomPanel.Q<Label>("RoomNameLabel");
             if (label != null) label.text = "Entrenament";
+
+            var labelCode = _waitingRoomPanel.Q<Label>("JoinCodeLabel");
+            if (labelCode != null) labelCode.style.display = DisplayStyle.None;
         }
  
         ShowMiddlePanel(_waitingRoomPanel);
@@ -940,7 +1029,7 @@ public class MenuManager : MonoBehaviour
     }
 }
  
-[System.Serializable] public class RoomData { public string name; public string host; public int players; public int max; public int port; public string ip; }
+[System.Serializable] public class RoomData { public string id; public string name; public string host; public int players; public int max; public int port; public string ip; public string relayCode; }
 [System.Serializable] public class RoomListWrapper { public RoomData[] items; }
  
 [System.Serializable]

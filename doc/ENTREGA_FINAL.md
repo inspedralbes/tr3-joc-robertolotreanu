@@ -12,6 +12,7 @@ La feature seleccionada per al desenvolupament guiat per especificació ha estat
 - **Spawning autoritari**: Aparició immediata sobre la plataforma base ("Floor") de l'escena.
 - **Sincronització de noms**: Sistema robust per evitar conflictes en entorns de test (ParrelSync) mitjançant un diccionari persistent al servidor.
 - **HUD Dinàmic**: Llistat en temps real de tots els participants amb indicadors d'estat (Viu/Mort).
+- **Unity Relay & Nat Traversal**: Migració d'un sistema basat en IP a Unity Relay per permetre connexions globals sense obertura de ports i un sistema de Join Codes de 6 caràcters.
 
 ## 2. Procés seguit amb la IA
 S'ha seguit el flux de treball **OpenSpec**:
@@ -21,6 +22,8 @@ S'ha seguit el flux de treball **OpenSpec**:
 4.  **Implementació Iterativa**: Ús de l'agent d'IA per generar el codi, seguit de proves en temps real.
 
 ## 3. Principals problemes trobats
+- **Conflictes de Port i NAT**: El sistema inicial IP-to-IP fallava fora de la xarxa local. Es va resoldre integrant Unity Relay.
+- **Col·lisions d'Host**: Diverses sales podien tenir el mateix hostName, provocant el tancament prematur de partides actives. S'ha solucionat amb un sistema d'ID d'un sol ús (GUID).
 - **Conflicte de PlayerPrefs**: Durant el test local amb ParrelSync, les dues instàncies del joc compartien el mateix fitxer de configuració de Windows, provocant que tots els jugadors tinguessin el mateix nom.
 - **Prioritat de Càmera**: Els bots s'instanciaven mil·lisegons abans que el jugador, provocant que la càmera s'enganxés a la IA en lloc de l'usuari.
 - **Estructures de Braces**: Errors de sintaxi menors durant la refactorització de mètodes complexos a `PlayerMovement.cs`.

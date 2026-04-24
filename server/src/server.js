@@ -68,31 +68,38 @@ const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
 
 app.post('/api/rooms/create', (req, res) => {
-    const { roomName, hostName, maxPlayers, port } = req.body;
+    const { roomName, hostName, maxPlayers, port, relayCode, id } = req.body;
     let ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket.remoteAddress;
     if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
     if (ip && ip.startsWith('::ffff:')) ip = ip.substring(7);
 
+    const roomId = id || Date.now().toString();
     const newRoom = {
-        id: Date.now().toString(),
-        name: roomName, host: hostName,
-        players: 1, playersList: [hostName],
+        id: roomId,
+        name: roomName, 
+        host: hostName,
+        players: 1, 
+        playersList: [hostName],
         max: parseInt(maxPlayers) || 4,
         port: parseInt(port) || 7777,
-        ip: ip
+        ip: ip,
+        relayCode: relayCode || ""
     };
     activeRooms.push(newRoom);
-    console.log(`Sala creada: ${newRoom.name} a la IP ${newRoom.ip}:${newRoom.port}`);
+    console.log(`Sala creada: ${newRoom.name} (ID: ${newRoom.id}) a la IP ${newRoom.ip}:${newRoom.port} | Relay: ${newRoom.relayCode}`);
     res.status(201).send(newRoom);
 });
 
 app.post('/api/rooms/join', (req, res) => {
-    const { roomName, playerName } = req.body;
-    const room = activeRooms.find(r => r.name === roomName);
+    const { roomName, playerName, roomId } = req.body;
+    const room = roomId 
+        ? activeRooms.find(r => r.id === roomId)
+        : activeRooms.find(r => r.name === roomName);
+
     if (room && room.players < room.max) {
         room.players++;
         room.playersList.push(playerName);
-        console.log(`${playerName} s'ha unit a ${roomName}`);
+        console.log(`${playerName} s'ha unit a ${room.name} (ID: ${room.id})`);
         res.status(200).send(room);
     } else {
         res.status(400).send({ message: 'Sala plena o no trobada' });
@@ -104,9 +111,10 @@ app.post('/api/rooms/clear', (req, res) => {
     res.send('OK');
 });
 
-app.delete('/api/rooms/delete/:hostName', (req, res) => {
-    activeRooms = activeRooms.filter(r => r.host !== req.params.hostName);
-    console.log(`Sala del host ${req.params.hostName} eliminada`);
+app.delete('/api/rooms/delete/:id', (req, res) => {
+    const roomId = req.params.id;
+    activeRooms = activeRooms.filter(r => r.id !== roomId);
+    console.log(`Sala amb ID ${roomId} eliminada`);
     res.status(200).send('OK');
 });
 

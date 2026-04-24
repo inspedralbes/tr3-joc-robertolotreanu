@@ -358,38 +358,25 @@ public class HUDController : MonoBehaviour
     /// </summary>
     private System.Collections.IEnumerator EliminarSala()
     {
-        // 1. Intentar usar el nombre de sesión persistente (evita problemas de ParrelSync)
-        string hostName = PlayerPrefs.GetString("PlayerName", "");
+        string roomId = PlayerPrefs.GetString("CurrentRoomId", "");
 
-        // 2. Si no, intentar trobar el nom del host real des dels jugadors en xarxa
-        if (string.IsNullOrEmpty(hostName)) {
-            var allPlayers = UnityEngine.Object.FindObjectsOfType<PlayerMovement>();
-            foreach (var pm in allPlayers)
-            {
-                if (pm.OwnerClientId == 0 && !pm.isBot.Value)
-                {
-                    hostName = pm.playerName.Value.ToString();
-                    break;
-                }
-            }
-        }
+        if (string.IsNullOrEmpty(roomId)) yield break;
 
-        // 3. Fallback final
-        if (string.IsNullOrEmpty(hostName) || hostName == "Jugador")
-            hostName = PlayerPrefs.GetString("PlayerName", "");
-
-        if (string.IsNullOrEmpty(hostName)) yield break;
-
-        hostName = hostName.Trim(); // Limpieza vital
-        Debug.Log($"[HUD] Sol·licitant eliminar sala del host: '{hostName}'");
+        Debug.Log($"[HUD] Sol·licitant eliminar sala amb ID: '{roomId}'");
 
         using var www = UnityWebRequest.Delete(
-            "http://204.168.211.127:3000/api/rooms/delete/" + UnityWebRequest.EscapeURL(hostName));
+            "http://204.168.211.127:3000/api/rooms/delete/" + UnityWebRequest.EscapeURL(roomId));
         yield return www.SendWebRequest();
 
         if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+        {
             Debug.Log("[HUD] Sala eliminada del servidor.");
+            PlayerPrefs.DeleteKey("CurrentRoomId");
+            PlayerPrefs.Save();
+        }
         else
+        {
             Debug.LogWarning("[HUD] No s'ha pogut eliminar la sala: " + www.error);
+        }
     }
 }

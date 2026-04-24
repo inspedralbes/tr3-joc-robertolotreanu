@@ -15,7 +15,7 @@ class MongoUserRepository {
         return await User.findOneAndUpdate(
             { username: userData.username },
             userData,
-            { new: true }
+            { returnDocument: 'after' }
         );
     }
 }
