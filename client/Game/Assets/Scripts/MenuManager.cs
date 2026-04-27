@@ -20,7 +20,7 @@ public class MenuManager : MonoBehaviour
     // --- Panells ---
     private VisualElement _root;
     private VisualElement _loginPanel, _modeSelectionPanel, _lobbyPanel, _waitingRoomPanel, _createRoomPopup;
-    private TextField _usernameInput, _newRoomName, _manualJoinCodeInput;
+    private TextField _usernameInput, _passwordInput, _newRoomName, _manualJoinCodeInput;
  
     // --- Etiquetes de Perfil ---
     private Label _nameLabel, _statsLabel, _loginStatusLabel;
@@ -105,6 +105,7 @@ public class MenuManager : MonoBehaviour
         if (btnMulti != null) btnMulti.clicked += () => ShowMiddlePanel(_lobbyPanel);
  
         _usernameInput = root.Q<TextField>("UsernameInput");
+        _passwordInput = root.Q<TextField>("PasswordInput");
         _newRoomName   = root.Q<TextField>("NewRoomName");
         _manualJoinCodeInput = root.Q<TextField>("ManualJoinCodeInput");
  
@@ -233,6 +234,9 @@ public class MenuManager : MonoBehaviour
         Button btnLogin = root.Q<Button>("LoginButton");
         if (btnLogin != null) btnLogin.clicked += () => StartCoroutine(RequestLogin());
         _loginButtonBottom = btnLogin;
+
+        Button btnRegister = root.Q<Button>("RegisterButton");
+        if (btnRegister != null) btnRegister.clicked += () => StartCoroutine(RequestRegister());
  
         _loginBarButton = root.Q<Button>("LoginButtonBottom");
         if (_loginBarButton != null) _loginBarButton.clicked += () => StartCoroutine(RequestLogin());
@@ -400,41 +404,57 @@ public class MenuManager : MonoBehaviour
  
     IEnumerator RequestLogin()
     {
-        if (_usernameInput == null || string.IsNullOrEmpty(_usernameInput.value)) {
-            if (_loginStatusLabel != null) _loginStatusLabel.text = "Escriu un nom d'usuari";
+        if (_usernameInput == null || string.IsNullOrEmpty(_usernameInput.value) || 
+            _passwordInput == null || string.IsNullOrEmpty(_passwordInput.value)) {
+            if (_loginStatusLabel != null) _loginStatusLabel.text = "Escriu usuari i contrasenya";
             yield break;
         }
- 
+
         if (_loginStatusLabel != null) _loginStatusLabel.text = "Iniciant sessió...";
- 
+
         WWWForm loginForm = new WWWForm();
         loginForm.AddField("username", _usernameInput.value);
-        loginForm.AddField("password", "1234");
- 
+        loginForm.AddField("password", _passwordInput.value);
+
         using (var www = UnityWebRequest.Post(_serverURL + "/users/login", loginForm)) {
             yield return www.SendWebRequest();
             if (www.result == UnityWebRequest.Result.Success) {
                 HandleLoginSuccess();
-                yield break;
-            } else if (www.responseCode == 401 || www.responseCode == 404) {
-                if (_loginStatusLabel != null) _loginStatusLabel.text = "Creant usuari nou...";
-                WWWForm regForm = new WWWForm();
-                regForm.AddField("username", _usernameInput.value);
-                regForm.AddField("password", "1234");
-                using (var wwwReg = UnityWebRequest.Post(_serverURL + "/users/register", regForm)) {
-                    yield return wwwReg.SendWebRequest();
-                    if (wwwReg.result == UnityWebRequest.Result.Success) {
-                        HandleLoginSuccess();
-                    } else {
-                        if (_loginStatusLabel != null) {
-                            _loginStatusLabel.text = "Error al registrar: " + wwwReg.downloadHandler.text;
-                            _loginStatusLabel.style.color = Color.red;
-                        }
-                    }
-                }
             } else {
                 if (_loginStatusLabel != null) {
-                    _loginStatusLabel.text = "Error de xarxa: " + www.error;
+                    string errorMsg = "Error login";
+                    if (www.responseCode == 401) errorMsg = "Contrasenya incorrecta";
+                    else if (www.responseCode == 404) errorMsg = "L'usuari no existeix";
+                    _loginStatusLabel.text = errorMsg;
+                    _loginStatusLabel.style.color = Color.red;
+                }
+            }
+        }
+    }
+
+    IEnumerator RequestRegister()
+    {
+        if (_usernameInput == null || string.IsNullOrEmpty(_usernameInput.value) || 
+            _passwordInput == null || string.IsNullOrEmpty(_passwordInput.value)) {
+            if (_loginStatusLabel != null) _loginStatusLabel.text = "Escriu usuari i contrasenya per al registre";
+            yield break;
+        }
+
+        if (_loginStatusLabel != null) _loginStatusLabel.text = "Registrant guerrer...";
+
+        WWWForm regForm = new WWWForm();
+        regForm.AddField("username", _usernameInput.value);
+        regForm.AddField("password", _passwordInput.value);
+
+        using (var www = UnityWebRequest.Post(_serverURL + "/users/register", regForm)) {
+            yield return www.SendWebRequest();
+            if (www.result == UnityWebRequest.Result.Success) {
+                if (_loginStatusLabel != null) _loginStatusLabel.text = "Registre correcte!";
+                yield return new WaitForSeconds(1f);
+                StartCoroutine(RequestLogin());
+            } else {
+                if (_loginStatusLabel != null) {
+                    _loginStatusLabel.text = "Error registre: " + www.downloadHandler.text;
                     _loginStatusLabel.style.color = Color.red;
                 }
             }
